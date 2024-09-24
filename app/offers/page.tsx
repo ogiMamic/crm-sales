@@ -9,9 +9,9 @@ import { Badge } from "@/components/ui/badge"
 
 export default function OffersPage() {
   const [offers, setOffers] = useState([
-    { id: 1, number: 'A001', customer: 'Acme Corp', date: '2023-06-01', status: 'Gesendet', amount: 5000, product: 'Website erstellen' },
-    { id: 2, number: 'A002', customer: 'Beta Inc', date: '2023-06-05', status: 'Angenommen', amount: 7500, product: 'App erstellen' },
-    { id: 3, number: 'A003', customer: 'Gamma LLC', date: '2023-06-10', status: 'Abgelehnt', amount: 3000, product: 'SEO Optimierung' },
+    { id: 1, number: 'A001', customer: '1', date: '2023-06-01', status: 'Gesendet', amount: 5000, product: 'Website erstellen' },
+    { id: 2, number: 'A002', customer: '2', date: '2023-06-05', status: 'Angenommen', amount: 7500, product: 'App erstellen' },
+    { id: 3, number: 'A003', customer: '3', date: '2023-06-10', status: 'Abgelehnt', amount: 3000, product: 'SEO Optimierung' },
   ])
 
   const [customers] = useState([

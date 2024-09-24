@@ -121,7 +121,7 @@ export function CreateOfferDialog({ onCreateOffer, customers, lastOfferNumber }:
                   <CommandInput placeholder="Kunde suchen..." />
                   <CommandEmpty>Kein Kunde gefunden.</CommandEmpty>
                   <CommandGroup>
-                    {customers.map((customer) => (
+                    {Array.isArray(customers) && customers.map((customer) => (
                       <CommandItem
                         key={customer.id}
                         onSelect={() => {
