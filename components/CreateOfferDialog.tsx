@@ -11,6 +11,14 @@ import { format } from "date-fns"
 import { cn } from "@/lib/utils"
 import { Calendar } from "@/components/ui/calendar"
 
+type Customer = {
+  id: string
+  name: string
+  email: string
+  phone: string
+  company: string
+}
+
 type OfferFormData = {
   number: string
   customer: string
@@ -22,7 +30,6 @@ type OfferFormData = {
 
 type CreateOfferDialogProps = {
   onCreateOffer: (offer: OfferFormData) => void
-  customers: { id: string; name: string }[]
   lastOfferNumber: string
 }
 
@@ -43,8 +50,9 @@ const offerStatuses = [
   'Abgeschlossen',
 ]
 
-export function CreateOfferDialog({ onCreateOffer, customers, lastOfferNumber }: CreateOfferDialogProps) {
+export function CreateOfferDialog({ onCreateOffer, lastOfferNumber }: CreateOfferDialogProps) {
   const [isOpen, setIsOpen] = useState(false)
+  const [customers, setCustomers] = useState<Customer[]>([])
   const [formData, setFormData] = useState<OfferFormData>({
     number: '',
     customer: '',
@@ -53,6 +61,24 @@ export function CreateOfferDialog({ onCreateOffer, customers, lastOfferNumber }:
     amount: 0,
     product: '',
   })
+
+  useEffect(() => {
+    async function fetchCustomers() {
+      try {
+        const response = await fetch('/api/customers')
+        if (!response.ok) {
+          throw new Error('Failed to fetch customers')
+        }
+        const data = await response.json()
+        setCustomers(data)
+      } catch (error) {
+        console.error('Error fetching customers:', error)
+        setCustomers([])
+      }
+    }
+
+    fetchCustomers()
+  }, [])
 
   useEffect(() => {
     if (isOpen) {
@@ -108,6 +134,7 @@ export function CreateOfferDialog({ onCreateOffer, customers, lastOfferNumber }:
                 <Button
                   variant="outline"
                   role="combobox"
+                  aria-expanded={isOpen}
                   className="w-full justify-between"
                 >
                   {formData.customer
@@ -121,7 +148,7 @@ export function CreateOfferDialog({ onCreateOffer, customers, lastOfferNumber }:
                   <CommandInput placeholder="Kunde suchen..." />
                   <CommandEmpty>Kein Kunde gefunden.</CommandEmpty>
                   <CommandGroup>
-                    {Array.isArray(customers) && customers.map((customer) => (
+                    {customers.map((customer) => (
                       <CommandItem
                         key={customer.id}
                         onSelect={() => {

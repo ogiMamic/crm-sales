@@ -7,26 +7,28 @@ import { CreateOfferDialog } from '@/components/CreateOfferDialog'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 
+type Offer = {
+  id: number
+  number: string
+  customer: string
+  date: string
+  status: string
+  amount: number
+  product: string
+}
+
 export default function OffersPage() {
-  const [offers, setOffers] = useState([
+  const [offers, setOffers] = useState<Offer[]>([
     { id: 1, number: 'A001', customer: '1', date: '2023-06-01', status: 'Gesendet', amount: 5000, product: 'Website erstellen' },
     { id: 2, number: 'A002', customer: '2', date: '2023-06-05', status: 'Angenommen', amount: 7500, product: 'App erstellen' },
     { id: 3, number: 'A003', customer: '3', date: '2023-06-10', status: 'Abgelehnt', amount: 3000, product: 'SEO Optimierung' },
   ])
 
-  const [customers] = useState([
-    { id: '1', name: 'Acme Corp' },
-    { id: '2', name: 'Beta Inc' },
-    { id: '3', name: 'Gamma LLC' },
-    { id: '4', name: 'Delta Co' },
-    { id: '5', name: 'Epsilon GmbH' },
-  ])
-
-  const handleCreateOffer = (newOffer) => {
-    setOffers([...offers, { ...newOffer, id: offers.length + 1 }])
+  const handleCreateOffer = (newOffer: Offer) => {
+    setOffers(prevOffers => [...prevOffers, { ...newOffer, id: prevOffers.length + 1 }])
   }
 
-  const getStatusBadge = (status) => {
+  const getStatusBadge = (status: string) => {
     switch (status) {
       case 'Entwurf':
         return <Badge variant="outline">Entwurf</Badge>
@@ -54,8 +56,7 @@ export default function OffersPage() {
           <CardTitle className="text-2xl font-bold">Angebote</CardTitle>
           <CreateOfferDialog 
             onCreateOffer={handleCreateOffer} 
-            customers={customers} 
-            lastOfferNumber={offers[offers.length - 1].number}
+            lastOfferNumber={offers.length > 0 ? offers[offers.length - 1].number : 'A000'}
           />
         </CardHeader>
         <CardContent>
@@ -83,7 +84,7 @@ export default function OffersPage() {
               {offers.map((offer) => (
                 <TableRow key={offer.id}>
                   <TableCell className="font-medium">{offer.number}</TableCell>
-                  <TableCell>{customers.find(c => c.id === offer.customer)?.name || offer.customer}</TableCell>
+                  <TableCell>{offer.customer}</TableCell>
                   <TableCell>{offer.date}</TableCell>
                   <TableCell>{getStatusBadge(offer.status)}</TableCell>
                   <TableCell>{offer.product}</TableCell>
