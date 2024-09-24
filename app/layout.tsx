@@ -1,7 +1,7 @@
 import './globals.css'
 import { Inter } from 'next/font/google'
 import { ClerkProvider } from '@clerk/nextjs'
-import Sidebar from '@/components/Sidebar'
+import { Sidebar } from '@/components/Sidebar'
 import Header from '@/components/Header'
 
 const inter = Inter({ subsets: ['latin'] })

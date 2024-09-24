@@ -1,20 +1,24 @@
-"use client"
+'use client'
 
 import React, { useState } from 'react'
-import { DragDropContext, DropResult } from 'react-beautiful-dnd'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { DragDropContext, DropResult } from 'react-beautiful-dnd'
 
 import { ProjectOverview } from '@/components/ProjectOverview'
 import { MilestoneBoard } from '@/components/MilestoneBoard'
 import { TaskCreationDialog } from '@/components/TaskCreationDialog'
 import { TaskDetailDialog } from '@/components/TaskDetailDialog'
 import { TimelineView } from '@/components/TimelineView'
-import { Project, Milestone, Task } from '@/types/project'
+import { EmployeeAllocation } from '@/components/EmployeeAllocation'
+import { ProjectNotes } from '@/components/ProjectNotes'
+import { ProjectReminders } from '@/components/ProjectReminders'
+import { ProjectProgress } from '@/components/ProjectProgress'
+import { Project, Task } from '@/types/project'
 
 export default function ProjectPage({ params }: { params: { id: string } }) {
   const [project, setProject] = useState<Project>({
@@ -81,7 +85,9 @@ export default function ProjectPage({ params }: { params: { id: string } }) {
         endDate: new Date('2024-06-02'), 
         tasks: []
       },
-    ]
+    ],
+    notes: [],
+    reminders: []
   })
 
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
@@ -144,6 +150,10 @@ export default function ProjectPage({ params }: { params: { id: string } }) {
     }
   }
 
+  const handleProjectUpdate = (updatedProject: Project) => {
+    setProject(updatedProject);
+  }
+
   return (
     <div className="container mx-auto py-6 px-4 bg-gray-100 min-h-screen">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 space-y-4 sm:space-y-0">
@@ -157,7 +167,9 @@ export default function ProjectPage({ params }: { params: { id: string } }) {
         </div>
       </div>
 
-      <Tabs defaultValue="overview" className="space-y-4">
+      <ProjectProgress project={project} />
+
+      <Tabs defaultValue="overview" className="space-y-4 mt-6">
         <TabsList className="flex flex-wrap justify-start gap-2 bg-white p-1 rounded-lg">
           <TabsTrigger value="overview">Übersicht</TabsTrigger>
           <TabsTrigger value="tasks">Aufgaben</TabsTrigger>
@@ -168,6 +180,9 @@ export default function ProjectPage({ params }: { params: { id: string } }) {
           <TabsTrigger value="tickets">Tickets</TabsTrigger>
           <TabsTrigger value="invoices">Rechnungen</TabsTrigger>
           <TabsTrigger value="timeline">Timeline</TabsTrigger>
+          <TabsTrigger value="employees">Mitarbeiter</TabsTrigger>
+          <TabsTrigger value="notes">Notizen</TabsTrigger>
+          <TabsTrigger value="reminders">Erinnerungen</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview">
@@ -303,6 +318,42 @@ export default function ProjectPage({ params }: { params: { id: string } }) {
             </CardHeader>
             <CardContent>
               <TimelineView project={project} />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="employees">
+          <Card className="bg-white">
+            <CardHeader>
+              <CardTitle>Mitarbeiter Zuweisung</CardTitle>
+              <CardDescription>Mitarbeiter den Aufgaben zuweisen</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <EmployeeAllocation project={project} onUpdate={handleProjectUpdate} />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="notes">
+          <Card className="bg-white">
+            <CardHeader>
+              <CardTitle>Projekt Notizen</CardTitle>
+              <CardDescription>Notizen zum Projekt hinzufügen und anzeigen</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ProjectNotes project={project} onUpdate={handleProjectUpdate} />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="reminders">
+          <Card className="bg-white">
+            <CardHeader>
+              <CardTitle>Projekt Erinnerungen</CardTitle>
+              <CardDescription>Erinnerungen zum Projekt hinzufügen und anzeigen</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ProjectReminders project={project} onUpdate={handleProjectUpdate} />
             </CardContent>
           </Card>
         </TabsContent>
