@@ -22,7 +22,6 @@ export interface Milestone {
   name: string;
   startDate: Date;
   endDate: Date;
-  color: string;
   tasks: Task[];
 }
 
@@ -42,4 +41,20 @@ export interface Task {
   billable: boolean;
   visibleToClient: boolean;
   status: string;
+  timeSpent: number;
+  comments: Comment[];
+  attachments: Attachment[];
+}
+
+export interface Comment {
+  id: string;
+  author: string;
+  content: string;
+  createdAt: Date;
+}
+
+export interface Attachment {
+  id: string;
+  name: string;
+  url: string;
 }

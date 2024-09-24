@@ -1,15 +1,19 @@
 "use client"
 
-import { useState } from 'react'
+import React, { useState } from 'react'
 import { DragDropContext, DropResult } from 'react-beautiful-dnd'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Badge } from "@/components/ui/badge"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 import { ProjectOverview } from '@/components/ProjectOverview'
-import { KanbanBoard } from '@/components/KanbanBoard'
+import { MilestoneBoard } from '@/components/MilestoneBoard'
 import { TaskCreationDialog } from '@/components/TaskCreationDialog'
 import { TaskDetailDialog } from '@/components/TaskDetailDialog'
+import { TimelineView } from '@/components/TimelineView'
 import { Project, Milestone, Task } from '@/types/project'
 
 export default function ProjectPage({ params }: { params: { id: string } }) {
@@ -20,8 +24,8 @@ export default function ProjectPage({ params }: { params: { id: string } }) {
     client: "Fantasiefirma e.K",
     budget: "8000,00",
     currency: "€",
-    startDate: "01.04.2024",
-    endDate: "01.06.2024",
+    startDate: "2024-04-01",
+    endDate: "2024-06-01",
     status: "In Arbeit",
     description: "In diesem Projekt geht es darum, dass wir eine komplette Performance Funnel aufbauen. Strategie sehen zur Zielgruppenanalyse, Content Creation & Media Buying",
     progress: 38,
@@ -35,10 +39,9 @@ export default function ProjectPage({ params }: { params: { id: string } }) {
         name: 'Analysephase', 
         startDate: new Date('2024-04-01'), 
         endDate: new Date('2024-04-07'), 
-        color: '#FFFF00',
         tasks: [
-          { id: 't1', title: 'Marktanalyse durchführen', status: 'In Bearbeitung', description: 'Detaillierte Analyse des Marktes durchführen' },
-          { id: 't2', title: 'Zielgruppenanalyse erstellen', status: 'Offen', description: 'Zielgruppe identifizieren und analysieren' },
+          { id: 't1', title: 'Marktanalyse durchführen', status: 'In Bearbeitung', description: 'Detaillierte Analyse des Marktes durchführen', priority: 'High', assignee: 'John Doe', startDate: new Date('2024-04-01'), endDate: new Date('2024-04-03'), timeSpent: 0, comments: [], attachments: [] },
+          { id: 't2', title: 'Zielgruppenanalyse erstellen', status: 'Offen', description: 'Zielgruppe identifizieren und analysieren', priority: 'Medium', assignee: 'Jane Smith', startDate: new Date('2024-04-04'), endDate: new Date('2024-04-07'), timeSpent: 0, comments: [], attachments: [] },
         ]
       },
       { 
@@ -46,9 +49,8 @@ export default function ProjectPage({ params }: { params: { id: string } }) {
         name: 'Strategiephase', 
         startDate: new Date('2024-04-08'), 
         endDate: new Date('2024-04-14'), 
-        color: '#90EE90',
         tasks: [
-          { id: 't3', title: 'Marketingstrategie entwickeln', status: 'Offen', description: 'Entwicklung einer umfassenden Marketingstrategie' },
+          { id: 't3', title: 'Marketingstrategie entwickeln', status: 'Offen', description: 'Entwicklung einer umfassenden Marketingstrategie', priority: 'High', assignee: 'Alice Johnson', startDate: new Date('2024-04-08'), endDate: new Date('2024-04-14'), timeSpent: 0, comments: [], attachments: [] },
         ]
       },
       { 
@@ -56,7 +58,6 @@ export default function ProjectPage({ params }: { params: { id: string } }) {
         name: 'Contentphase', 
         startDate: new Date('2024-04-15'), 
         endDate: new Date('2024-04-28'), 
-        color: '#ADD8E6',
         tasks: []
       },
       { 
@@ -64,7 +65,6 @@ export default function ProjectPage({ params }: { params: { id: string } }) {
         name: 'Revisionsphase', 
         startDate: new Date('2024-04-29'), 
         endDate: new Date('2024-05-05'), 
-        color: '#FFA07A',
         tasks: []
       },
       { 
@@ -72,7 +72,6 @@ export default function ProjectPage({ params }: { params: { id: string } }) {
         name: 'Media Buying', 
         startDate: new Date('2024-05-06'), 
         endDate: new Date('2024-05-26'), 
-        color: '#DDA0DD',
         tasks: []
       },
       { 
@@ -80,13 +79,53 @@ export default function ProjectPage({ params }: { params: { id: string } }) {
         name: 'Reporting', 
         startDate: new Date('2024-05-27'), 
         endDate: new Date('2024-06-02'), 
-        color: '#20B2AA',
         tasks: []
       },
     ]
   })
 
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
+  const [searchTerm, setSearchTerm] = useState("")
+  const [statusFilter, setStatusFilter] = useState<string | null>(null)
+
+  const filteredTasks = project.milestones
+    .flatMap((milestone) => milestone.tasks)
+    .filter((task) => 
+      task.title.toLowerCase().includes(searchTerm.toLowerCase()) &&
+      (!statusFilter || task.status === statusFilter)
+    )
+
+  const handleCreateTask = (newTask: Task) => {
+    const updatedMilestones = project.milestones.map(milestone => 
+      milestone.id === newTask.milestone
+        ? { ...milestone, tasks: [...milestone.tasks, newTask] }
+        : milestone
+    );
+
+    setProject({
+      ...project,
+      milestones: updatedMilestones,
+      totalTasks: project.totalTasks + 1
+    });
+  }
+
+  const handleUpdateTask = (updatedTask: Task) => {
+    const updatedMilestones = project.milestones.map(milestone => ({
+      ...milestone,
+      tasks: milestone.tasks.map(task => 
+        task.id === updatedTask.id ? updatedTask : task
+      )
+    }));
+
+    setProject({
+      ...project,
+      milestones: updatedMilestones
+    });
+  }
+
+  const handleTaskClick = (task: Task) => {
+    setSelectedTask(task);
+  }
 
   const handleDragEnd = (result: DropResult) => {
     if (!result.destination) return;
@@ -105,45 +144,11 @@ export default function ProjectPage({ params }: { params: { id: string } }) {
     }
   }
 
-  const handleCreateTask = (newTask: Task) => {
-    const updatedMilestones = project.milestones.map(milestone => 
-      milestone.id === newTask.milestone
-        ? { ...milestone, tasks: [...milestone.tasks, newTask] }
-        : milestone
-    );
-
-    setProject({
-      ...project,
-      milestones: updatedMilestones,
-      totalTasks: project.totalTasks + 1
-    });
-  }
-
-  const handleTaskClick = (task: Task) => {
-    setSelectedTask(task);
-  }
-
-  const handleUpdateTask = (updatedTask: Task) => {
-    const updatedMilestones = project.milestones.map(milestone => ({
-      ...milestone,
-      tasks: milestone.tasks.map(task => 
-        task.id === updatedTask.id ? updatedTask : task
-      )
-    }));
-
-    setProject({
-      ...project,
-      milestones: updatedMilestones
-    });
-
-    setSelectedTask(null);
-  }
-
   return (
     <div className="container mx-auto py-6 px-4 bg-gray-100 min-h-screen">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-gray-900">{project.name}</h1>
-        <div className="space-x-2">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 space-y-4 sm:space-y-0">
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">{project.name}</h1>
+        <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
           <TaskCreationDialog 
             milestones={project.milestones} 
             onCreateTask={handleCreateTask}
@@ -153,15 +158,16 @@ export default function ProjectPage({ params }: { params: { id: string } }) {
       </div>
 
       <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList className="grid grid-cols-4 sm:grid-cols-8 gap-2 bg-white p-1 rounded-lg">
-          <TabsTrigger value="overview">Projekt Übersicht</TabsTrigger>
+        <TabsList className="flex flex-wrap justify-start gap-2 bg-white p-1 rounded-lg">
+          <TabsTrigger value="overview">Übersicht</TabsTrigger>
           <TabsTrigger value="tasks">Aufgaben</TabsTrigger>
-          <TabsTrigger value="time">Zeiterfassungen</TabsTrigger>
+          <TabsTrigger value="time">Zeit</TabsTrigger>
           <TabsTrigger value="milestones">Meilensteine</TabsTrigger>
           <TabsTrigger value="files">Dateien</TabsTrigger>
           <TabsTrigger value="discussions">Diskussionen</TabsTrigger>
           <TabsTrigger value="tickets">Tickets</TabsTrigger>
           <TabsTrigger value="invoices">Rechnungen</TabsTrigger>
+          <TabsTrigger value="timeline">Timeline</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview">
@@ -176,7 +182,10 @@ export default function ProjectPage({ params }: { params: { id: string } }) {
             </CardHeader>
             <CardContent>
               <DragDropContext onDragEnd={handleDragEnd}>
-                <KanbanBoard milestones={project.milestones} onTaskClick={handleTaskClick} />
+                <MilestoneBoard 
+                  milestones={project.milestones} 
+                  onTaskClick={handleTaskClick}
+                />
               </DragDropContext>
             </CardContent>
           </Card>
@@ -189,7 +198,39 @@ export default function ProjectPage({ params }: { params: { id: string } }) {
               <CardDescription>Alle Aufgaben für dieses Projekt</CardDescription>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-gray-700">Aufgabenliste wird hier angezeigt.</p>
+              <div className="flex items-center space-x-2 mb-4">
+                <Input
+                  placeholder="Aufgaben suchen..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="max-w-sm"
+                />
+                <Select onValueChange={(value) => setStatusFilter(value === "all" ? null : value)}>
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Status Filter" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Alle</SelectItem>
+                    <SelectItem value="Offen">Offen</SelectItem>
+                    <SelectItem value="In Bearbeitung">In Bearbeitung</SelectItem>
+                    <SelectItem value="Abgeschlossen">Abgeschlossen</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                {filteredTasks.map((task) => (
+                  <div
+                    key={task.id}
+                    className="flex items-center justify-between p-2 bg-gray-50 rounded hover:bg-gray-100 cursor-pointer"
+                    onClick={() => handleTaskClick(task)}
+                  >
+                    <span>{task.title}</span>
+                    <Badge variant={task.status === "Abgeschlossen" ? "success" : "default"}>
+                      {task.status}
+                    </Badge>
+                  </div>
+                ))}
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
@@ -250,6 +291,18 @@ export default function ProjectPage({ params }: { params: { id: string } }) {
             </CardHeader>
             <CardContent>
               <p className="text-sm text-gray-700">Rechnungen werden hier angezeigt.</p>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="timeline">
+          <Card className="bg-white">
+            <CardHeader>
+              <CardTitle>Projekt Timeline</CardTitle>
+              <CardDescription>Überblick über Meilensteine und Aufgaben</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <TimelineView project={project} />
             </CardContent>
           </Card>
         </TabsContent>

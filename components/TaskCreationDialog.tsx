@@ -35,7 +35,10 @@ export function TaskCreationDialog({ milestones, onCreateTask }: TaskCreationDia
     description: '',
     billable: false,
     visibleToClient: false,
-    status: 'Offen'
+    status: 'Offen',
+    timeSpent: 0,
+    comments: [],
+    attachments: []
   })
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -79,7 +82,10 @@ export function TaskCreationDialog({ milestones, onCreateTask }: TaskCreationDia
       description: '',
       billable: false,
       visibleToClient: false,
-      status: 'Offen'
+      status: 'Offen',
+      timeSpent: 0,
+      comments: [],
+      attachments: []
     })
   }
 
