@@ -1,6 +1,6 @@
 import React from 'react'
-import { format, differenceInDays, addDays } from 'date-fns'
-import { Project, Milestone, Task } from '@/types/project'
+import { format, differenceInDays } from 'date-fns'
+import { Project } from '@/types/project'
 
 interface TimelineViewProps {
   project: Project
