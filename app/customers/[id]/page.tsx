@@ -1,40 +1,67 @@
-"use client"
+'use client'
 
 import { useState, useEffect } from 'react'
-import { useParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ArrowLeft, Save } from 'lucide-react'
 import Link from 'next/link'
+import { useAuth } from "@clerk/nextjs";
 
-// Mock function to fetch customer data
-const fetchCustomerData = (id: string) => {
-  // In a real application, this would be an API call
-  return Promise.resolve({
-    id: parseInt(id),
-    name: "Alice Johnson",
-    email: "alice@example.com",
-    phone: "123-456-7890",
-    company: "Tech Co",
-    notes: "VIP customer, prefers email communication"
-  })
+type Customer = {
+  id: string
+  name: string
+  email: string
+  phone: string
+  company: string
+  notes: string
 }
 
 export default function CustomerDetailsPage() {
   const { id } = useParams()
-  const [customer, setCustomer] = useState(null)
+  const router = useRouter()
+  const [customer, setCustomer] = useState<Customer | null>(null)
   const [isEditing, setIsEditing] = useState(false)
+  const { getToken } = useAuth();
 
   useEffect(() => {
-    fetchCustomerData(id as string).then(setCustomer)
+    fetchCustomerData()
   }, [id])
 
-  const handleSave = () => {
-    // In a real application, this would be an API call to update the customer data
-    console.log("Saving customer data:", customer)
-    setIsEditing(false)
+  const fetchCustomerData = async () => {
+    try {
+      const token = await getToken({ template: 'supabase' })
+      const response = await fetch(`/api/customers/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+      if (!response.ok) throw new Error('Failed to fetch customer')
+      const data = await response.json()
+      setCustomer(data)
+    } catch (error) {
+      console.error('Error fetching customer:', error)
+    }
+  }
+
+  const handleSave = async () => {
+    try {
+      const token = await getToken({ template: 'supabase' })
+      const response = await fetch(`/api/customers/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(customer),
+      })
+      if (!response.ok) throw new Error('Failed to update customer')
+      setIsEditing(false)
+    } catch (error) {
+      console.error('Error updating customer:', error)
+    }
   }
 
   if (!customer) {

@@ -9,10 +9,12 @@ datasource db {
 
 model Customer {
   id        String   @id @default(cuid())
+  name      String
+  email     String
+  phone     String?
+  company   String?
+  notes     String?
+  userId    String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  name      String
-  email     String   @unique
-  phone     String?
-  userId    String
 }

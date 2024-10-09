@@ -4,28 +4,23 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { useAuth } from "@clerk/nextjs";
 
-type CustomerFormData = {
+type Customer = {
+  id: string
   name: string
   email: string
   phone: string
   company: string
 }
 
-type CreateCustomerFormProps = {
-  onCustomerAdded: () => void
+type EditCustomerFormProps = {
+  customer: Customer
+  onCustomerUpdated: () => void
   onCancel: () => void
 }
 
-export function CreateCustomerForm({ onCustomerAdded, onCancel }: CreateCustomerFormProps) {
-  const { userId } = useAuth();
-  const [formData, setFormData] = useState<CustomerFormData>({
-    name: '',
-    email: '',
-    phone: '',
-    company: '',
-  })
+export function EditCustomerForm({ customer, onCustomerUpdated, onCancel }: EditCustomerFormProps) {
+  const [formData, setFormData] = useState<Customer>(customer)
   const [error, setError] = useState<string | null>(null)
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -37,26 +32,22 @@ export function CreateCustomerForm({ onCustomerAdded, onCancel }: CreateCustomer
     e.preventDefault()
     setError(null)
     try {
-      if (!userId) {
-        throw new Error('User not authenticated')
-      }
-      
-      const response = await fetch('/api/customers', {
-        method: 'POST',
+      const response = await fetch(`/api/customers/${customer.id}`, {
+        method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ ...formData, userId }),
+        body: JSON.stringify(formData),
       })
 
       if (!response.ok) {
-        throw new Error('Failed to add customer')
+        throw new Error('Failed to update customer')
       }
 
-      onCustomerAdded()
+      onCustomerUpdated()
     } catch (error) {
-      console.error('Error adding customer:', error)
-      setError('Failed to add customer. Please try again.')
+      console.error('Error updating customer:', error)
+      setError('Failed to update customer. Please try again.')
     }
   }
 
@@ -108,7 +99,7 @@ export function CreateCustomerForm({ onCustomerAdded, onCancel }: CreateCustomer
       </div>
       <div className="flex justify-end space-x-2">
         <Button type="button" variant="outline" onClick={onCancel}>Cancel</Button>
-        <Button type="submit">Add Customer</Button>
+        <Button type="submit">Update Customer</Button>
       </div>
     </form>
   )
