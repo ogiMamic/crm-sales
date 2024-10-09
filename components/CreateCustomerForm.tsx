@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { createSupabaseClient } from '@/lib/supabase'
 import { useAuth } from "@clerk/nextjs";
 
 type CustomerFormData = {
@@ -19,7 +20,7 @@ type CreateCustomerFormProps = {
 }
 
 export function CreateCustomerForm({ onCustomerAdded, onCancel }: CreateCustomerFormProps) {
-  const { userId } = useAuth();
+  const { userId, getToken } = useAuth();
   const [formData, setFormData] = useState<CustomerFormData>({
     name: '',
     email: '',
@@ -41,18 +42,19 @@ export function CreateCustomerForm({ onCustomerAdded, onCancel }: CreateCustomer
         throw new Error('User not authenticated')
       }
       
-      const response = await fetch('/api/customers', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ ...formData, userId }),
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to add customer')
+      const token = await getToken({ template: 'supabase' })
+      if (!token) {
+        throw new Error('Failed to get authentication token')
       }
-
+  
+      const supabase = createSupabaseClient(token)
+      
+      const { data, error: supabaseError } = await supabase
+        .from('Customers')
+        .insert([{ ...formData, user_id: userId }])
+      
+      if (supabaseError) throw supabaseError
+  
       onCustomerAdded()
     } catch (error) {
       console.error('Error adding customer:', error)
