@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -18,20 +18,60 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { Label } from "@/components/ui/label"
 import { PlusCircle, Search } from 'lucide-react'
+import { createSupabaseClient } from '@/lib/supabase'
+import { CreateCustomerForm } from '@/components/CreateCustomerForm'
+import { useUser, SignIn, useAuth } from "@clerk/nextjs";
 
-// Mock data for customers
-const customersData = [
-  { id: 1, name: "Alice Johnson", email: "alice@example.com", phone: "123-456-7890", company: "Tech Co" },
-  { id: 2, name: "Bob Smith", email: "bob@example.com", phone: "234-567-8901", company: "Design Inc" },
-  { id: 3, name: "Charlie Brown", email: "charlie@example.com", phone: "345-678-9012", company: "Marketing LLC" },
-]
+type Customer = {
+  id: string
+  name: string
+  email: string
+  phone: string
+  company: string
+  created_at: string
+  updated_at: string
+  user_id: string
+}
 
 export default function CustomersPage() {
-  const [customers, setCustomers] = useState(customersData)
+  const [customers, setCustomers] = useState<Customer[]>([])
   const [searchTerm, setSearchTerm] = useState("")
-  const [newCustomer, setNewCustomer] = useState({ name: "", email: "", phone: "", company: "" })
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const { isSignedIn, user } = useUser();
+  const { getToken } = useAuth();
+
+  useEffect(() => {
+    if (isSignedIn && user) {
+      fetchCustomers()
+    } else {
+      setIsLoading(false)
+    }
+  }, [isSignedIn, user])
+
+  const fetchCustomers = async () => {
+    try {
+      setIsLoading(true)
+      setError(null)
+      const token = await getToken({ template: 'supabase' })
+      const supabase = createSupabaseClient(token)
+      const { data, error } = await supabase
+        .from('Customers')
+        .select('*')
+        .eq('user_id', user?.id)
+      
+      if (error) throw error
+
+      setCustomers(data || [])
+    } catch (error) {
+      console.error('Error fetching customers:', error)
+      setError('Failed to fetch customers. Please try again later.')
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   const filteredCustomers = customers.filter(
     (customer) =>
@@ -40,15 +80,26 @@ export default function CustomersPage() {
       customer.company.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
-  const handleAddCustomer = () => {
-    setCustomers([...customers, { id: customers.length + 1, ...newCustomer }])
-    setNewCustomer({ name: "", email: "", phone: "", company: "" })
+  const handleCustomerAdded = () => {
+    fetchCustomers()
+    setIsDialogOpen(false)
+  }
+
+  if (!isSignedIn) {
+    return (
+      <div className="container mx-auto py-10">
+        <h1 className="text-3xl font-bold mb-6">Prijava</h1>
+        <SignIn />
+      </div>
+    )
   }
 
   return (
     <div className="container mx-auto py-10">
       <h1 className="text-3xl font-bold mb-6">Customers</h1>
       
+      {error && <div className="text-red-500 mb-4">{error}</div>}
+
       <div className="flex justify-between items-center mb-6">
         <div className="relative">
           <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -59,7 +110,7 @@ export default function CustomersPage() {
             className="pl-8 w-[300px]"
           />
         </div>
-        <Dialog>
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
             <Button>
               <PlusCircle className="mr-2 h-4 w-4" />
@@ -70,79 +121,37 @@ export default function CustomersPage() {
             <DialogHeader>
               <DialogTitle>Add New Customer</DialogTitle>
             </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="name" className="text-right">
-                  Name
-                </Label>
-                <Input
-                  id="name"
-                  value={newCustomer.name}
-                  onChange={(e) => setNewCustomer({...newCustomer, name: e.target.value})}
-                  className="col-span-3"
-                />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="email" className="text-right">
-                  Email
-                </Label>
-                <Input
-                  id="email"
-                  value={newCustomer.email}
-                  onChange={(e) => setNewCustomer({...newCustomer, email: e.target.value})}
-                  className="col-span-3"
-                />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="phone" className="text-right">
-                  Phone
-                </Label>
-                <Input
-                  id="phone"
-                  value={newCustomer.phone}
-                  onChange={(e) => setNewCustomer({...newCustomer, phone: e.target.value})}
-                  className="col-span-3"
-                />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="company" className="text-right">
-                  Company
-                </Label>
-                <Input
-                  id="company"
-                  value={newCustomer.company}
-                  onChange={(e) => setNewCustomer({...newCustomer, company: e.target.value})}
-                  className="col-span-3"
-                />
-              </div>
-            </div>
-            <Button onClick={handleAddCustomer}>Add Customer</Button>
+            <CreateCustomerForm onCustomerAdded={handleCustomerAdded} onCancel={() => setIsDialogOpen(false)} />
           </DialogContent>
         </Dialog>
       </div>
 
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead className="w-[100px]">ID</TableHead>
-            <TableHead>Name</TableHead>
-            <TableHead>Email</TableHead>
-            <TableHead>Phone</TableHead>
-            <TableHead>Company</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {filteredCustomers.map((customer) => (
-            <TableRow key={customer.id}>
-              <TableCell className="font-medium">{customer.id}</TableCell>
-              <TableCell>{customer.name}</TableCell>
-              <TableCell>{customer.email}</TableCell>
-              <TableCell>{customer.phone}</TableCell>
-              <TableCell>{customer.company}</TableCell>
+      {isLoading ? (
+        <div>Loading customers...</div>
+      ) : (
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Name</TableHead>
+              <TableHead>Email</TableHead>
+              <TableHead>Phone</TableHead>
+              <TableHead>Company</TableHead>
+              <TableHead>Created At</TableHead>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {filteredCustomers.map((customer) => (
+              <TableRow key={customer.id}>
+                <TableCell>{customer.name}</TableCell>
+                <TableCell>{customer.email}</TableCell>
+                <TableCell>{customer.phone}</TableCell>
+                <TableCell>{customer.company}</TableCell>
+                <TableCell>{new Date(customer.created_at).toLocaleString()}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      )}
     </div>
   )
 }
