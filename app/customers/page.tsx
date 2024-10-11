@@ -35,7 +35,7 @@ import { useUser, SignIn } from "@clerk/nextjs"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
-import { toast } from "@/components/ui/toaster"
+import { useToast } from "@/hooks/use-toast"
 
 type Customer = {
   id: string

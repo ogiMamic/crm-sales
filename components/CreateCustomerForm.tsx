@@ -4,14 +4,16 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { createSupabaseClient } from '@/lib/supabase'
-import { useAuth } from "@clerk/nextjs";
+import { Textarea } from '@/components/ui/textarea'
+import { useAuth } from "@clerk/nextjs"
+import { useToast } from "@/hooks/use-toast"
 
 type CustomerFormData = {
   name: string
   email: string
   phone: string
   company: string
+  notes: string
 }
 
 type CreateCustomerFormProps = {
@@ -20,51 +22,68 @@ type CreateCustomerFormProps = {
 }
 
 export function CreateCustomerForm({ onCustomerAdded, onCancel }: CreateCustomerFormProps) {
-  const { userId, getToken } = useAuth();
+  const { userId, getToken } = useAuth()
+  const { toast } = useToast()
   const [formData, setFormData] = useState<CustomerFormData>({
     name: '',
     email: '',
     phone: '',
     company: '',
+    notes: '',
   })
-  const [error, setError] = useState<string | null>(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
     setFormData(prev => ({ ...prev, [name]: value }))
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setError(null)
+    setIsSubmitting(true)
     try {
       if (!userId) {
         throw new Error('User not authenticated')
       }
       
-      const token = await getToken({ template: 'supabase' })
+      const token = await getToken()
       if (!token) {
         throw new Error('Failed to get authentication token')
       }
   
-      const supabase = createSupabaseClient(token)
+      const response = await fetch('/api/customers', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ ...formData, userId }),
+      })
       
-      const { data, error: supabaseError } = await supabase
-        .from('Customers')
-        .insert([{ ...formData, user_id: userId }])
-      
-      if (supabaseError) throw supabaseError
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to add customer')
+      }
   
+      toast({
+        title: "Success",
+        description: "Customer added successfully",
+      })
       onCustomerAdded()
     } catch (error) {
       console.error('Error adding customer:', error)
-      setError('Failed to add customer. Please try again.')
+      toast({
+        title: "Error",
+        description: "Failed to add customer. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      {error && <div className="text-red-500">{error}</div>}
       <div className="space-y-2">
         <Label htmlFor="name">Name</Label>
         <Input
@@ -108,9 +127,23 @@ export function CreateCustomerForm({ onCustomerAdded, onCancel }: CreateCustomer
           className="w-full"
         />
       </div>
+      <div className="space-y-2">
+        <Label htmlFor="notes">Notes</Label>
+        <Textarea
+          id="notes"
+          name="notes"
+          value={formData.notes}
+          onChange={handleChange}
+          className="w-full"
+        />
+      </div>
       <div className="flex justify-end space-x-2">
-        <Button type="button" variant="outline" onClick={onCancel}>Cancel</Button>
-        <Button type="submit">Add Customer</Button>
+        <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>
+          Cancel
+        </Button>
+        <Button type="submit" disabled={isSubmitting}>
+          {isSubmitting ? 'Adding...' : 'Add Customer'}
+        </Button>
       </div>
     </form>
   )
