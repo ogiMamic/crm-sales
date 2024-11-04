@@ -118,7 +118,7 @@ export function TaskDetailDialog({ task, onClose, onUpdate }: TaskDetailDialogPr
 
   return (
     <Dialog open={true} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[700px] bg-white">
+      <DialogContent className="sm:max-w-[700px] bg-white max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold">{editedTask.title}</DialogTitle>
         </DialogHeader>

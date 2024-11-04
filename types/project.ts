@@ -28,18 +28,18 @@ export interface Milestone {
 export interface Task {
   id: string;
   title: string;
-  milestone: string;
+  milestone?: string;
   startDate: Date;
   endDate: Date;
   priority: string;
   assignee: string;
-  project: string;
-  follower: string;
-  checklist: string;
-  tags: string;
+  project?: string;
+  follower?: string;
+  checklist?: string;
+  tags?: string;
   description: string;
-  billable: boolean;
-  visibleToClient: boolean;
+  billable?: boolean;
+  visibleToClient?: boolean;
   status: string;
   timeSpent: number;
   comments: Comment[];

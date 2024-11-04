@@ -31,7 +31,7 @@ export function MilestoneBoard({ milestones, onTaskClick }: MilestoneBoardProps)
                           ref={provided.innerRef}
                           {...provided.draggableProps}
                           {...provided.dragHandleProps}
-                          className="bg-white p-3 mb-2 rounded shadow-sm border border-gray-200 cursor-pointer hover:bg-gray-50 transition-colors"
+                          className="bg-white p-3 mb-2 mt-2 rounded shadow-sm border border-gray-200 cursor-pointer hover:bg-gray-50 transition-colors"
                           onClick={() => onTaskClick(task)}
                         >
                           <h3 className="font-medium mb-1">{task.title}</h3>

@@ -27,7 +27,7 @@ export function ProjectReminders({ project, onUpdate }) {
         />
         <Calendar 
           selected={newReminder.date}
-          onSelect={(date) => setNewReminder({...newReminder, date})}
+          onDayClick={(date) => setNewReminder({...newReminder, date})}
         />
         <Button onClick={handleAddReminder}>Hinzufügen</Button>
       </div>
