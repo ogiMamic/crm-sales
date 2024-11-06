@@ -33,7 +33,7 @@ export function EditCustomerForm({ customer, onCustomerUpdated, onCancel }: Edit
     setError(null)
     try {
       const response = await fetch(`/api/customers/${customer.id}`, {
-        method: 'PUT',
+        method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
         },
