@@ -168,7 +168,7 @@ export default function CustomersPage() {
   return (
     <div className="container mx-auto py-10 space-y-8">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Customers</h1>
+        <h1 className="text-3xl font-bold text-gray-600">Customers</h1>
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
           <DialogTrigger asChild>
             <Button>
@@ -178,7 +178,7 @@ export default function CustomersPage() {
           </DialogTrigger>
           <DialogContent className="sm:max-w-[425px] bg-white">
             <DialogHeader>
-              <DialogTitle>Add New Customer</DialogTitle>
+              <DialogTitle className='text-primary'>Add New Customer</DialogTitle>
               <DialogDescription>
                 Enter the details of the new customer below.
               </DialogDescription>
@@ -308,7 +308,7 @@ export default function CustomersPage() {
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="sm:max-w-[425px] bg-white">
           <DialogHeader>
-            <DialogTitle>Edit Customer</DialogTitle>
+            <DialogTitle className="text-primary">Edit Customer</DialogTitle>
             <DialogDescription>
               Update the customer's details below.
             </DialogDescription>

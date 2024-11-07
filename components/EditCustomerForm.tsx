@@ -22,6 +22,7 @@ type EditCustomerFormProps = {
 export function EditCustomerForm({ customer, onCustomerUpdated, onCancel }: EditCustomerFormProps) {
   const [formData, setFormData] = useState<Customer>(customer)
   const [error, setError] = useState<string | null>(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -30,6 +31,7 @@ export function EditCustomerForm({ customer, onCustomerUpdated, onCancel }: Edit
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setIsSubmitting(true)
     setError(null)
     try {
       const response = await fetch(`/api/customers/${customer.id}`, {
@@ -48,6 +50,8 @@ export function EditCustomerForm({ customer, onCustomerUpdated, onCancel }: Edit
     } catch (error) {
       console.error('Error updating customer:', error)
       setError('Failed to update customer. Please try again.')
+    }finally{
+      setIsSubmitting(false)
     }
   }
 
@@ -55,18 +59,18 @@ export function EditCustomerForm({ customer, onCustomerUpdated, onCancel }: Edit
     <form onSubmit={handleSubmit} className="space-y-4">
       {error && <div className="text-red-500">{error}</div>}
       <div className="space-y-2">
-        <Label htmlFor="name">Name</Label>
+        <Label htmlFor="name" className="text-primary">Name</Label>
         <Input
           id="name"
           name="name"
           value={formData.name}
           onChange={handleChange}
           required
-          className="w-full"
+          className="w-full text-primary"
         />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="email">Email</Label>
+        <Label htmlFor="email" className="text-primary">Email</Label>
         <Input
           id="email"
           name="email"
@@ -74,32 +78,32 @@ export function EditCustomerForm({ customer, onCustomerUpdated, onCancel }: Edit
           value={formData.email}
           onChange={handleChange}
           required
-          className="w-full"
+          className="w-full text-primary"
         />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="phone">Phone</Label>
+        <Label htmlFor="phone" className="text-primary">Phone</Label>
         <Input
           id="phone"
           name="phone"
           value={formData.phone}
           onChange={handleChange}
-          className="w-full"
+          className="w-full text-primary"
         />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="company">Company</Label>
+        <Label htmlFor="company" className="text-primary">Company</Label>
         <Input
           id="company"
           name="company"
           value={formData.company}
           onChange={handleChange}
-          className="w-full"
+          className="w-full text-primary"
         />
       </div>
       <div className="flex justify-end space-x-2">
-        <Button type="button" variant="outline" onClick={onCancel}>Cancel</Button>
-        <Button type="submit">Update Customer</Button>
+        <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting} className="text-primary">Cancel</Button>
+        <Button type="submit" disabled={isSubmitting}>{isSubmitting ? 'Editing...' : 'Update Customer'}</Button>
       </div>
     </form>
   )

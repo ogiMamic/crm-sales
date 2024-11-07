@@ -85,18 +85,18 @@ export function CreateCustomerForm({ onCustomerAdded, onCancel }: CreateCustomer
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
-        <Label htmlFor="name">Name</Label>
+        <Label htmlFor="name" className="text-primary">Name</Label>
         <Input
           id="name"
           name="name"
           value={formData.name}
           onChange={handleChange}
           required
-          className="w-full"
+          className="w-full text-primary"
         />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="email">Email</Label>
+        <Label htmlFor="email" className="text-primary">Email</Label>
         <Input
           id="email"
           name="email"
@@ -104,41 +104,41 @@ export function CreateCustomerForm({ onCustomerAdded, onCancel }: CreateCustomer
           value={formData.email}
           onChange={handleChange}
           required
-          className="w-full"
+          className="w-full text-primary"
         />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="phone">Phone</Label>
+        <Label htmlFor="phone" className="text-primary">Phone</Label>
         <Input
           id="phone"
           name="phone"
           value={formData.phone}
           onChange={handleChange}
-          className="w-full"
+          className="w-full text-primary"
         />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="company">Company</Label>
+        <Label htmlFor="company" className="text-primary">Company</Label>
         <Input
           id="company"
           name="company"
           value={formData.company}
           onChange={handleChange}
-          className="w-full"
+          className="w-full text-primary"
         />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="notes">Notes</Label>
+        <Label htmlFor="notes" className="text-primary">Notes</Label>
         <Textarea
           id="notes"
           name="notes"
           value={formData.notes}
           onChange={handleChange}
-          className="w-full"
+          className="w-full text-primary"
         />
       </div>
       <div className="flex justify-end space-x-2">
-        <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>
+        <Button type="button" variant="outline" className="text-primary" onClick={onCancel} disabled={isSubmitting}>
           Cancel
         </Button>
         <Button type="submit" disabled={isSubmitting}>
