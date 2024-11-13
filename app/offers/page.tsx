@@ -6,10 +6,20 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { CreateOfferDialog } from '@/components/CreateOfferDialog'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { MoreHorizontal, Pencil, Trash, FileText } from 'lucide-react'
+import { EditOfferDialog } from '@/components/EditOfferDialog'
 
 type Customer = {
   id: string
   name: string
+}
+
+type Product = {
+  id: string
+  productName: string
+  priceType: string
+  amount: number
 }
 
 type Offer = {
@@ -28,15 +38,31 @@ type NewOffer = Omit<Offer, 'id' | 'customer'> & { customer: string }
 
 export default function OffersPage() {
   const [offers, setOffers] = useState<Offer[]>([])
+  const [customers, setCustomers] = useState<Customer[]>([])
+  const [products, setProducts] = useState<Product[]>([])
 
   useEffect(() => {
     fetchOffers()
+    fetchCustomers()
+    fetchProducts()
   }, [])
 
   const fetchOffers = async () => {
     const response = await fetch('/api/offers')
     const data = await response.json()
     setOffers(data)
+  }
+
+  const fetchCustomers = async () => {
+    const response = await fetch('/api/customers')
+    const data = await response.json()
+    setCustomers(data)
+  }
+
+  const fetchProducts = async () => {
+    const response = await fetch('/api/products')
+    const data = await response.json()
+    setProducts(data)
   }
 
   const handleCreateOffer = async (newOffer: NewOffer) => {
@@ -50,6 +76,32 @@ export default function OffersPage() {
     if (response.ok) {
       fetchOffers()
     }
+  }
+
+  const handleEditOffer = async (editedOffer: Offer) => {
+    const response = await fetch(`/api/offers/${editedOffer.id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(editedOffer),
+    })
+    if (response.ok) {
+      fetchOffers()
+    }
+  }
+
+  const handleDeleteOffer = async (offerId: string) => {
+    const response = await fetch(`/api/offers/${offerId}`, {
+      method: 'DELETE',
+    })
+    if (response.ok) {
+      fetchOffers()
+    }
+  }
+
+  const handleGeneratePDF = (offerId: string) => {
+    window.open(`/api/offers/${offerId}/pdf`, '_blank')
   }
 
   const getStatusBadge = (status: string) => {
@@ -118,7 +170,30 @@ export default function OffersPage() {
                     {offer.amount.toFixed(2)} € 
                   </TableCell>
                   <TableCell>
-                    <Button variant="outline" size="sm">Bearbeiten</Button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" className="h-8 w-8 p-0">
+                          <span className="sr-only">Aktionen öffnen</span>
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <EditOfferDialog 
+                          offer={offer}
+                          onEditOffer={handleEditOffer}
+                          customers={customers}
+                          products={products}
+                        />
+                        <DropdownMenuItem onClick={() => handleDeleteOffer(offer.id)}>
+                          <Trash className="mr-2 h-4 w-4" />
+                          <span>Löschen</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleGeneratePDF(offer.id)}>
+                          <FileText className="mr-2 h-4 w-4" />
+                          <span>PDF generieren</span>
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </TableCell>
                 </TableRow>
               ))}
