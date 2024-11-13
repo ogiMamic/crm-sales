@@ -1,247 +1,209 @@
+'use client'
+
 import React, { useState, useEffect } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command"
-import { CalendarIcon, Check, ChevronsUpDown } from "lucide-react"
-import { format } from "date-fns"
-import { cn } from "@/lib/utils"
-import { Calendar } from "@/components/ui/calendar"
+import { ManageProductsDialog } from './ManageProductsDialog'
+import { Settings } from 'lucide-react'
 
 type Customer = {
   id: string
   name: string
-  email: string
-  phone: string
-  company: string
 }
 
-type OfferFormData = {
+type Product = {
+  id: string
+  productName: string
+  priceType: string
+  amount: number
+}
+
+type NewOffer = {
   number: string
+  customerId: string
   customer: string
-  date: Date
+  date: string
   status: string
   amount: number
   product: string
+  productName: string
+  pricingType: string
 }
 
 type CreateOfferDialogProps = {
-  onCreateOffer: (offer: OfferFormData) => void
+  onCreateOffer: (offer: NewOffer) => Promise<void>
   lastOfferNumber: string
 }
 
-const products = [
-  { value: 'website', label: 'Website erstellen', price: 5000 },
-  { value: 'app', label: 'App erstellen', price: 10000 },
-  { value: 'seo', label: 'SEO Optimierung', price: 2000 },
-  { value: 'marketing', label: 'Online Marketing', price: 3000 },
-]
-
-const offerStatuses = [
-  'Entwurf',
-  'Gesendet',
-  'Aufgenommen',
-  'Angenommen',
-  'Abgelehnt',
-  'In Bearbeitung',
-  'Abgeschlossen',
-]
-
 export function CreateOfferDialog({ onCreateOffer, lastOfferNumber }: CreateOfferDialogProps) {
-  const [isOpen, setIsOpen] = useState(false)
+  const [open, setOpen] = useState(false)
   const [customers, setCustomers] = useState<Customer[]>([])
-  const [formData, setFormData] = useState<OfferFormData>({
+  const [products, setProducts] = useState<Product[]>([])
+  const [offer, setOffer] = useState<NewOffer>({
     number: '',
+    customerId: '',
     customer: '',
-    date: new Date(),
+    date: new Date().toISOString().split('T')[0],
     status: 'Entwurf',
     amount: 0,
     product: '',
+    productName: '',
+    pricingType: 'fixed'
   })
 
   useEffect(() => {
-    async function fetchCustomers() {
-      try {
-        const response = await fetch('/api/customers')
-        if (!response.ok) {
-          throw new Error('Failed to fetch customers')
-        }
-        const data = await response.json()
-        setCustomers(data)
-      } catch (error) {
-        console.error('Error fetching customers:', error)
-        setCustomers([])
-      }
-    }
-
     fetchCustomers()
+    fetchProducts()
   }, [])
 
   useEffect(() => {
-    if (isOpen) {
-      const nextNumber = parseInt(lastOfferNumber.slice(1)) + 1
-      setFormData(prev => ({
-        ...prev,
-        number: `A${String(nextNumber).padStart(3, '0')}`,
-        date: new Date(),
-        status: 'Entwurf',
-      }))
-    }
-  }, [isOpen, lastOfferNumber])
+    const lastNumber = parseInt(lastOfferNumber.slice(1))
+    const nextNumber = `A${String(lastNumber + 1).padStart(3, '0')}`
+    setOffer(prev => ({ ...prev, number: nextNumber }))
+  }, [lastOfferNumber])
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    onCreateOffer(formData)
-    setIsOpen(false)
+  const fetchCustomers = async () => {
+    try {
+      const response = await fetch('/api/customers')
+      if (!response.ok) {
+        throw new Error('Failed to fetch customers')
+      }
+      const data = await response.json()
+      setCustomers(data)
+    } catch (error) {
+      console.error('Error fetching customers:', error)
+    }
   }
 
-  const handleProductChange = (value: string) => {
-    const selectedProduct = products.find(p => p.value === value)
-    setFormData(prev => ({
+  const fetchProducts = async () => {
+    try {
+      const response = await fetch('/api/products')
+      if (!response.ok) {
+        throw new Error('Failed to fetch products')
+      }
+      const data = await response.json()
+      setProducts(data)
+    } catch (error) {
+      console.error('Error fetching products:', error)
+    }
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    await onCreateOffer(offer)
+    setOpen(false)
+  }
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target
+    setOffer(prev => ({ ...prev, [name]: value }))
+  }
+
+  const handleCustomerChange = (value: string) => {
+    const selectedCustomer = customers.find(c => c.id === value)
+    setOffer(prev => ({
       ...prev,
-      product: value,
-      amount: selectedProduct ? selectedProduct.price : 0
+      customerId: value,
+      customer: selectedCustomer ? selectedCustomer.name : ''
     }))
   }
 
+  const handleProductChange = (value: string) => {
+    const selectedProduct = products.find(p => p.id === value)
+    if (selectedProduct) {
+      setOffer(prev => ({
+        ...prev,
+        product: selectedProduct.id,
+        productName: selectedProduct.productName,
+        pricingType: selectedProduct.priceType,
+        amount: selectedProduct.amount
+      }))
+    }
+  }
+
+
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="default">Neues Angebot</Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px] bg-white dark:bg-gray-800">
+      <DialogContent className="sm:max-w-[425px] bg-white text-black">
         <DialogHeader>
-          <DialogTitle className="text-xl font-semibold">Neues Angebot erstellen</DialogTitle>
+          <DialogTitle>Neues Angebot erstellen</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="number">Nummer</Label>
-            <Input
-              id="number"
-              name="number"
-              value={formData.number}
-              readOnly
-              className="w-full"
-            />
+          <div>
+            <Label htmlFor="number">Angebotsnummer</Label>
+            <Input id="number" name="number" value={offer.number} readOnly />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="customer">Kunde</Label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  role="combobox"
-                  aria-expanded={isOpen}
-                  className="w-full justify-between"
-                >
-                  {formData.customer
-                    ? customers.find((customer) => customer.id === formData.customer)?.name
-                    : "Kunde auswählen"}
-                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-[300px] p-0">
-                <Command>
-                  <CommandInput placeholder="Kunde suchen..." />
-                  <CommandEmpty>Kein Kunde gefunden.</CommandEmpty>
-                  <CommandGroup>
-                    {customers.map((customer) => (
-                      <CommandItem
-                        key={customer.id}
-                        onSelect={() => {
-                          setFormData(prev => ({ ...prev, customer: customer.id }))
-                        }}
-                      >
-                        <Check
-                          className={cn(
-                            "mr-2 h-4 w-4",
-                            formData.customer === customer.id ? "opacity-100" : "opacity-0"
-                          )}
-                        />
-                        {customer.name}
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
-                </Command>
-              </PopoverContent>
-            </Popover>
+          <div>
+            <Label htmlFor="customerId">Kunde</Label>
+            <Select name="customerId" value={offer.customerId} onValueChange={handleCustomerChange}>
+              <SelectTrigger>
+                <SelectValue placeholder="Wählen Sie einen Kunden" />
+              </SelectTrigger>
+              <SelectContent>
+                {customers.map((customer) => (
+                  <SelectItem key={customer.id} value={customer.id}>{customer.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
-          <div className="space-y-2">
+          <div>
             <Label htmlFor="date">Datum</Label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant={"outline"}
-                  className={cn(
-                    "w-full justify-start text-left font-normal",
-                    !formData.date && "text-muted-foreground"
-                  )}
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {formData.date ? format(formData.date, "PPP") : <span>Datum auswählen</span>}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0">
-                <Calendar
-                  mode="single"
-                  selected={formData.date}
-                  onSelect={(date) => date && setFormData(prev => ({ ...prev, date }))}
-                  initialFocus
-                />
-              </PopoverContent>
-            </Popover>
+            <Input id="date" name="date" type="date" value={offer.date} onChange={handleChange} required />
           </div>
-          <div className="space-y-2">
+          <div>
             <Label htmlFor="status">Status</Label>
-            <Select
-              value={formData.status}
-              onValueChange={(value) => setFormData(prev => ({ ...prev, status: value }))}
-            >
-              <SelectTrigger id="status" className="w-full">
-                <SelectValue placeholder="Status wählen" />
+            <Select name="status" value={offer.status} onValueChange={(value) => setOffer(prev => ({ ...prev, status: value }))}>
+              <SelectTrigger>
+                <SelectValue placeholder="Wählen Sie einen Status" />
               </SelectTrigger>
               <SelectContent>
-                {offerStatuses.map((status) => (
-                  <SelectItem key={status} value={status}>{status}</SelectItem>
-                ))}
+                <SelectItem value="Entwurf">Entwurf</SelectItem>
+                <SelectItem value="Gesendet">Gesendet</SelectItem>
+                <SelectItem value="Angenommen">Angenommen</SelectItem>
+                <SelectItem value="Abgelehnt">Abgelehnt</SelectItem>
               </SelectContent>
             </Select>
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="product">Produkt/Dienstleistung</Label>
-            <Select
-              value={formData.product}
-              onValueChange={handleProductChange}
-            >
-              <SelectTrigger id="product" className="w-full">
-                <SelectValue placeholder="Produkt wählen" />
-              </SelectTrigger>
-              <SelectContent>
-                {products.map((product) => (
-                  <SelectItem key={product.value} value={product.value}>
-                    {product.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <div className="relative">
+            <Label htmlFor="product">Produkt</Label>
+            <div className="flex items-center">
+              <div className="flex-grow">
+                <Select name="product" value={offer.product} onValueChange={handleProductChange}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue>
+                      {offer.productName || "Wählen Sie ein Produkt"}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {products.map((product) => (
+                      <SelectItem key={product.id} value={product.id}>{product.productName}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <ManageProductsDialog onProductsChanged={fetchProducts}>
+                <Button variant="ghost" size="icon" className="ml-2">
+                  <Settings className="h-4 w-4" />
+                  <span className="sr-only">Produkte verwalten</span>
+                </Button>
+              </ManageProductsDialog>
+            </div>
           </div>
-          <div className="space-y-2">
+          <div>
+            <Label htmlFor="pricingType">Preistyp</Label>
+            <Input id="pricingType" name="pricingType" value={offer.pricingType === 'fixed' ? 'Pauschal' : 'Pro Stunde'} readOnly />
+          </div>
+          <div>
             <Label htmlFor="amount">Betrag</Label>
-            <Input
-              id="amount"
-              name="amount"
-              type="number"
-              value={formData.amount}
-              onChange={(e) => setFormData(prev => ({ ...prev, amount: parseFloat(e.target.value) }))}
-              required
-              className="w-full"
-              placeholder="Betrag eingeben"
-            />
+            <Input id="amount" name="amount" type="number" value={offer.amount} onChange={handleChange} required />
           </div>
-          <Button type="submit" className="w-full">Angebot erstellen</Button>
+          <Button type="submit">Angebot erstellen</Button>
         </form>
       </DialogContent>
     </Dialog>

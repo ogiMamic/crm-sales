@@ -1,31 +1,55 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { CreateOfferDialog } from '@/components/CreateOfferDialog'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 
+type Customer = {
+  id: string
+  name: string
+}
+
 type Offer = {
-  id: number
+  id: string
   number: string
-  customer: string
+  customerId: string
+  customer: Customer
   date: string
   status: string
   amount: number
   product: string
+  pricingType: string
 }
 
-export default function OffersPage() {
-  const [offers, setOffers] = useState<Offer[]>([
-    { id: 1, number: 'A001', customer: '1', date: '2023-06-01', status: 'Gesendet', amount: 5000, product: 'Website erstellen' },
-    { id: 2, number: 'A002', customer: '2', date: '2023-06-05', status: 'Angenommen', amount: 7500, product: 'App erstellen' },
-    { id: 3, number: 'A003', customer: '3', date: '2023-06-10', status: 'Abgelehnt', amount: 3000, product: 'SEO Optimierung' },
-  ])
+type NewOffer = Omit<Offer, 'id' | 'customer'> & { customer: string }
 
-  const handleCreateOffer = (newOffer: Offer) => {
-    setOffers(prevOffers => [...prevOffers, { ...newOffer, id: prevOffers.length + 1 }])
+export default function OffersPage() {
+  const [offers, setOffers] = useState<Offer[]>([])
+
+  useEffect(() => {
+    fetchOffers()
+  }, [])
+
+  const fetchOffers = async () => {
+    const response = await fetch('/api/offers')
+    const data = await response.json()
+    setOffers(data)
+  }
+
+  const handleCreateOffer = async (newOffer: NewOffer) => {
+    const response = await fetch('/api/offers', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(newOffer),
+    })
+    if (response.ok) {
+      fetchOffers()
+    }
   }
 
   const getStatusBadge = (status: string) => {
@@ -37,13 +61,13 @@ export default function OffersPage() {
       case 'Aufgenommen':
         return <Badge variant="secondary">Aufgenommen</Badge>
       case 'Angenommen':
-        return <Badge variant="success">Angenommen</Badge>
+        return <Badge variant="secondary">Angenommen</Badge>
       case 'Abgelehnt':
         return <Badge variant="destructive">Abgelehnt</Badge>
       case 'In Bearbeitung':
-        return <Badge variant="warning">In Bearbeitung</Badge>
+        return <Badge variant="outline">In Bearbeitung</Badge>
       case 'Abgeschlossen':
-        return <Badge variant="info">Abgeschlossen</Badge>
+        return <Badge variant="secondary">Abgeschlossen</Badge>
       default:
         return <Badge variant="default">{status}</Badge>
     }
@@ -76,6 +100,7 @@ export default function OffersPage() {
                 <TableHead>Datum</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Produkt</TableHead>
+                <TableHead>Preistyp</TableHead>
                 <TableHead className="text-right">Betrag</TableHead>
                 <TableHead>Aktionen</TableHead>
               </TableRow>
@@ -84,11 +109,14 @@ export default function OffersPage() {
               {offers.map((offer) => (
                 <TableRow key={offer.id}>
                   <TableCell className="font-medium">{offer.number}</TableCell>
-                  <TableCell>{offer.customer}</TableCell>
-                  <TableCell>{offer.date}</TableCell>
+                  <TableCell>{offer.customer.name}</TableCell>
+                  <TableCell>{new Date(offer.date).toLocaleDateString()}</TableCell>
                   <TableCell>{getStatusBadge(offer.status)}</TableCell>
                   <TableCell>{offer.product}</TableCell>
-                  <TableCell className="text-right">{offer.amount.toFixed(2)} €</TableCell>
+                  <TableCell>{offer.pricingType === 'hourly' ? 'Pro Stunde' : 'Pauschal'}</TableCell>
+                  <TableCell className="text-right">
+                    {offer.amount.toFixed(2)} € 
+                  </TableCell>
                   <TableCell>
                     <Button variant="outline" size="sm">Bearbeiten</Button>
                   </TableCell>
