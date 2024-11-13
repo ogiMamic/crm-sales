@@ -21,9 +21,9 @@ export default function ProjectsPage() {
   )
 
   return (
-    <div className="container mx-auto py-6 px-4">
+    <div className="container mx-auto py-6 px-4 bg-white shadow-lg rounded-lg">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Projekte</h1>
+        <h1 className="text-2xl font-bold text-primary border-b pb-2 mb-4">Projekte</h1>
         <Link href="/projekte/new">
           <Button>Neues Projekt</Button>
         </Link>
@@ -44,17 +44,17 @@ export default function ProjectsPage() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="bg-blue-100 p-4 rounded-lg">
-                <h3 className="font-semibold">Aktive Projekte</h3>
-                <p className="text-2xl">{projects.filter(p => p.status === "In Arbeit").length}</p>
+              <div className="bg-blue-100 p-4 rounded-lg shadow-sm border border-blue-200">
+                <h3 className="font-semibold text-blue-900 mb-2">Aktive Projekte</h3>
+                <p className="text-3xl font-bold text-blue-700">{projects.filter(p => p.status === "In Arbeit").length}</p>
               </div>
-              <div className="bg-green-100 p-4 rounded-lg">
-                <h3 className="font-semibold">Abgeschlossene Projekte</h3>
-                <p className="text-2xl">{projects.filter(p => p.status === "Abgeschlossen").length}</p>
+              <div className="bg-green-100 p-4 rounded-lg shadow-sm border border-green-200">
+                <h3 className="font-semibold text-green-900 mb-2">Abgeschlossene Projekte</h3>
+                <p className="text-3xl font-bold text-green-700">{projects.filter(p => p.status === "Abgeschlossen").length}</p>
               </div>
-              <div className="bg-yellow-100 p-4 rounded-lg">
-                <h3 className="font-semibold">Geplante Projekte</h3>
-                <p className="text-2xl">{projects.filter(p => p.status === "Geplant").length}</p>
+              <div className="bg-yellow-100 p-4 rounded-lg shadow-sm border border-yellow-200">
+                <h3 className="font-semibold text-yellow-900 mb-2">Geplante Projekte</h3>
+                <p className="text-3xl font-bold text-yellow-700">{projects.filter(p => p.status === "Geplant").length}</p>
               </div>
             </div>
           </CardContent>
@@ -63,24 +63,36 @@ export default function ProjectsPage() {
 
       <Table>
         <TableHeader>
-          <TableRow>
-            <TableHead>Projektname</TableHead>
-            <TableHead>Kunde</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Fortschritt</TableHead>
-            <TableHead>Aktionen</TableHead>
+          <TableRow className="bg-gray-100">
+            <TableHead className="font-semibold text-gray-900">Projektname</TableHead>
+            <TableHead className="font-semibold text-gray-900">Kunde</TableHead>
+            <TableHead className="font-semibold text-gray-900">Status</TableHead>
+            <TableHead className="font-semibold text-gray-900">Fortschritt</TableHead>
+            <TableHead className="font-semibold text-gray-900">Aktionen</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {filteredProjects.map((project) => (
-            <TableRow key={project.id}>
-              <TableCell>{project.name}</TableCell>
-              <TableCell>{project.client}</TableCell>
-              <TableCell>{project.status}</TableCell>
-              <TableCell>{project.progress}%</TableCell>
+            <TableRow key={project.id} className="hover:bg-gray-50">
+              <TableCell className="font-medium text-gray-900">{project.name}</TableCell>
+              <TableCell className="text-gray-700">{project.client}</TableCell>
+              <TableCell>
+                <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                  project.status === "In Arbeit" ? "bg-blue-100 text-blue-800" :
+                  project.status === "Abgeschlossen" ? "bg-green-100 text-green-800" :
+                  "bg-yellow-100 text-yellow-800"
+                }`}>
+                  {project.status}
+                </span>
+              </TableCell>
+              <TableCell>
+                <div className="w-full bg-gray-200 rounded-full h-2.5">
+                  <div className="bg-blue-600 h-2.5 rounded-full" style={{ width: `${project.progress}%` }}></div>
+                </div>
+              </TableCell>
               <TableCell>
                 <Link href={`/projekte/${project.id}`}>
-                  <Button variant="outline" size="sm">Details</Button>
+                  <Button variant="outline" size="sm" className="text-gray-700 border-gray-300 hover:bg-gray-100">Details</Button>
                 </Link>
               </TableCell>
             </TableRow>
