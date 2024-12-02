@@ -3,6 +3,7 @@ import { PDFDocument, rgb, StandardFonts, grayscale } from 'pdf-lib';
 import prisma from '@/lib/prisma';
 import fs from 'fs/promises';
 import path from 'path';
+import { currentUser } from '@clerk/nextjs/server';
 
 export async function GET(
   request: NextRequest,
@@ -26,6 +27,9 @@ export async function GET(
     if (!offer) {
       return NextResponse.json({ error: 'Offer not found' }, { status: 404 });
     }
+
+    const user = await currentUser();
+    const userName = user ? `${user.firstName} ${user.lastName}` : 'ogiX-digital Team';
 
     const pdfDoc = await PDFDocument.create();
     const page = pdfDoc.addPage([595.276, 841.890]); // A4 size
@@ -157,7 +161,7 @@ export async function GET(
     }
 
     // Add totals
-    yOffset -= 60; // Increase this value to move totals up and make room for footer
+    yOffset -= 60;
     const subtotal = offer.offerServices.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
     const discount = subtotal * (offer.discountPercentage || 0) / 100;
     const taxableAmount = subtotal - discount;
@@ -178,6 +182,12 @@ export async function GET(
     yOffset -= 20;
     page.drawText(`Gesamtbetrag:`, { x: 380, y: yOffset, size: 12, font: boldFont });
     page.drawText(`${total.toFixed(2)} €`, { x: 480, y: yOffset, size: 12, font: boldFont });
+
+    // Add closing text
+    yOffset -= 40;
+    page.drawText('Mit freundlichen Grüßen', { x: 40, y: yOffset, size: 10, font });
+    yOffset -= 20;
+    page.drawText(userName, { x: 40, y: yOffset, size: 10, font: boldFont });
 
     // Add footer
     const footerY = 30;
