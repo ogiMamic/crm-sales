@@ -1,57 +1,84 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { PrismaClient } from '@prisma/client'
-import { getAuth } from '@clerk/nextjs/server'
-
-const prisma = new PrismaClient()
+import { NextResponse } from 'next/server'
+import prisma from '@/lib/prisma'
 
 export async function GET() {
-  const offers = await prisma.offer.findMany({
-    include: {
-      customer: true,
-    },
-  })
-  return NextResponse.json(offers)
-}
-
-export async function POST(request: NextRequest) {
   try {
-    const { userId } = getAuth(request)
-    
-    if (!userId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    const body = await request.json()
-    
-    // Fetch the customer to ensure it exists and belongs to the current user
-    const customer = await prisma.customer.findFirst({
-      where: {
-        id: body.customerId,
-        userId: userId
+    const offers = await prisma.offer.findMany({
+      include: {
+        customer: true,
+        offerServices: {
+          include: {
+            service: true
+          }
+        }
       }
     })
+    return NextResponse.json(offers)
+  } catch (error) {
+    return NextResponse.json({ error: 'Error fetching offers' }, { status: 500 })
+  }
+}
 
-    if (!customer) {
-      return NextResponse.json({ error: 'Customer not found or does not belong to the current user' }, { status: 404 })
-    }
+export async function POST(request: Request) {
+  try {
+    const body = await request.json()
+    const {
+      customerId,
+      services,
+      taxPercentage = 19,
+      discountPercentage = 0
+    } = body
+
+    // Generate unique offer number (you may want to customize this)
+    const lastOffer = await prisma.offer.findFirst({
+      orderBy: { createdAt: 'desc' }
+    })
+    const nextNumber = lastOffer 
+      ? String(Number(lastOffer.number) + 1).padStart(5, '0')
+      : '00001'
+
+    // Calculate amounts
+    const subtotalAmount = services.reduce((sum: number, service: any) => 
+      sum + (service.quantity * service.unitPrice), 0)
+    const discountAmount = (subtotalAmount * discountPercentage) / 100
+    const taxableAmount = subtotalAmount - (discountAmount || 0)
+    const taxAmount = (taxableAmount * taxPercentage) / 100
+    const totalAmount = taxableAmount + taxAmount
 
     const offer = await prisma.offer.create({
       data: {
-        number: body.number,
-        customerId: body.customerId,
-        date: new Date(body.date),
-        status: body.status,
-        amount: parseFloat(body.amount),
-        product: body.productName,
-        pricingType: body.pricingType,
+        number: nextNumber,
+        customerId,
+        date: new Date(),
+        status: 'DRAFT',
+        subtotalAmount,
+        taxPercentage,
+        taxAmount,
+        discountPercentage,
+        discountAmount,
+        totalAmount,
+        offerServices: {
+          create: services.map((service: any) => ({
+            serviceId: service.serviceId,
+            quantity: service.quantity,
+            unitPrice: service.unitPrice,
+            totalPrice: service.quantity * service.unitPrice
+          }))
+        }
       },
       include: {
         customer: true,
-      },
+        offerServices: {
+          include: {
+            service: true
+          }
+        }
+      }
     })
+
     return NextResponse.json(offer)
   } catch (error) {
-    console.error('Error creating offer:', error)
-    return NextResponse.json({ error: 'Unable to create offer' }, { status: 500 })
+    return NextResponse.json({ error: 'Error creating offer' }, { status: 500 })
   }
 }
+
