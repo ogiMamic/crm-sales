@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
+import { PDFDocument, rgb, StandardFonts, grayscale } from 'pdf-lib';
 import prisma from '@/lib/prisma';
 import fs from 'fs/promises';
 import path from 'path';
@@ -69,6 +69,7 @@ export async function GET(
       page.drawText(offer.customer.address, { x: 300, y: yOffset, size: 10, font });
       yOffset -= 15;
     }
+
     // Add new text before services list
     yOffset = height - 250;
     const newText = 'Vielen Dank für Ihr Vertrauen in die ogiX-digital UG (haftungsbeschränkt).\nWir stellen Ihnen hiermit folgende Leistung im Angebot:';
@@ -156,6 +157,7 @@ export async function GET(
     }
 
     // Add totals
+    yOffset -= 60; // Increase this value to move totals up and make room for footer
     const subtotal = offer.offerServices.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
     const discount = subtotal * (offer.discountPercentage || 0) / 100;
     const taxableAmount = subtotal - discount;
@@ -177,13 +179,32 @@ export async function GET(
     page.drawText(`Gesamtbetrag:`, { x: 380, y: yOffset, size: 12, font: boldFont });
     page.drawText(`${total.toFixed(2)} €`, { x: 480, y: yOffset, size: 12, font: boldFont });
 
+    // Add footer
+    const footerY = 30;
+    const footerColor = grayscale(0.5); // Grayish color
+
+    // Left column
+    page.drawText('ogiX-digital UG (haftungsbeschränkt)', { x: 40, y: footerY + 40, size: 8, font, color: footerColor });
+    page.drawText('Alt-Griesheim 88a', { x: 40, y: footerY + 20, size: 8, font, color: footerColor });
+    page.drawText('D-65933 Frankfurt am Main', { x: 40, y: footerY, size: 8, font, color: footerColor });
+
+    // Middle column
+    page.drawText('Bankverbindung:', { x: 250, y: footerY + 40, size: 8, font, color: footerColor });
+    page.drawText('IBAN DE92 5005 0201 0200 7974 09', { x: 250, y: footerY + 20, size: 8, font, color: footerColor });
+    page.drawText('BIC HELADEF1822', { x: 250, y: footerY, size: 8, font, color: footerColor });
+
+    // Right column
+    page.drawText('AG Frankfurt a.M.HRB 132217', { x: 460, y: footerY + 40, size: 8, font, color: footerColor });
+    page.drawText('Geschäftsführer:', { x: 460, y: footerY + 20, size: 8, font, color: footerColor });
+    page.drawText('Roman Schanz', { x: 460, y: footerY, size: 8, font, color: footerColor });
+
     const pdfBytes = await pdfDoc.save();
 
     return new NextResponse(pdfBytes, {
       status: 200,
       headers: {
         'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="Angebot_${offer.number || offer.id}.pdf"`,
+        'Content-Disposition': `attachment; filename=Angebot_${offer.number || offer.id}.pdf`,
       },
     });
   } catch (error) {
