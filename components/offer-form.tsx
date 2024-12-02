@@ -19,7 +19,7 @@ import {
 } from '@/components/ui/select'
 import { Input } from '@/components/ui/input'
 import { useForm } from 'react-hook-form'
-import { CalendarIcon, Plus, X } from 'lucide-react'
+import { CalendarIcon, Plus, X, FileText, FileDown } from 'lucide-react'
 import { Calendar } from '@/components/ui/calendar'
 import {
   Popover,
@@ -143,6 +143,14 @@ export function OfferForm({ customers, services, initialData, onClose }: OfferFo
   }
 
   const totals = calculateTotals()
+
+  const handleGeneratePDF = () => {
+    alert('Generating PDF...')
+  }
+
+  const handleGenerateInvoice = () => {
+    alert('Converting to invoice...')
+  }
 
   return (
     <Dialog open={true} onOpenChange={onClose}>
@@ -423,22 +431,44 @@ export function OfferForm({ customers, services, initialData, onClose }: OfferFo
               </div>
             </div>
 
-            <div className="flex justify-end gap-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={onClose}
-                className="bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-              >
-                Cancel
-              </Button>
-              <Button 
-                type="submit" 
-                disabled={loading}
-                className="bg-blue-600 hover:bg-blue-700 text-white"
-              >
-                {loading ? 'Saving...' : 'Save Offer'}
-              </Button>
+            <div className="flex justify-between items-center">
+              <div className="space-x-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleGeneratePDF}
+                  className="bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                >
+                  <FileDown className="mr-2 h-4 w-4" />
+                  Generate PDF
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleGenerateInvoice}
+                  className="bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                >
+                  <FileText className="mr-2 h-4 w-4" />
+                  Generate Invoice
+                </Button>
+              </div>
+              <div className="space-x-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={onClose}
+                  className="bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  type="submit" 
+                  disabled={loading}
+                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                >
+                  {loading ? 'Saving...' : 'Save Offer'}
+                </Button>
+              </div>
             </div>
           </form>
         </Form>

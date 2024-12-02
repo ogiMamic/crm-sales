@@ -11,7 +11,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
-import { Pencil, Trash2 } from 'lucide-react'
+import { FileSignature, Pencil, Trash2, Wrench } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 
 export interface Offer {
@@ -100,7 +100,7 @@ export function OfferList({ onEditOffer }: OfferListProps) {
                     onClick={() => onEditOffer(offer)}
                     className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-gray-100"
                   >
-                    <Pencil className="h-4 w-4" />
+                    <FileSignature className="h-4 w-4" />
                   </Button>
                   <Button
                     size="icon"
