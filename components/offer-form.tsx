@@ -157,7 +157,7 @@ export function OfferForm({ customers, services, initialData, onClose }: OfferFo
           const url = window.URL.createObjectURL(blob);
           const link = document.createElement('a');
           link.href = url;
-          link.download = `Angebot_${offerId}.pdf`;
+          link.download = response.headers.get('Content-Disposition')?.split('filename=')[1] || `Angebot_${offerId}.pdf`;
           document.body.appendChild(link);
           link.click();
           document.body.removeChild(link);

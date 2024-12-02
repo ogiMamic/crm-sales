@@ -33,12 +33,13 @@ export async function GET(
     const page = pdfDoc.addPage([595.276, 841.890]); // A4 size
     const { width, height } = page.getSize();
     const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+    const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
     // Add logo
     const logoPath = path.join(process.cwd(), 'public', 'images', 'logo.png');
     const logoImage = await fs.readFile(logoPath);
     const logoImagePdf = await pdfDoc.embedPng(logoImage);
-    const logoDims = logoImagePdf.scale(0.7); // Adjust scale as needed
+    const logoDims = logoImagePdf.scale(0.7);
     page.drawImage(logoImagePdf, {
       x: width - logoDims.width - 40,
       y: height - logoDims.height - 40,
@@ -47,33 +48,45 @@ export async function GET(
     });
 
     // Add company details
-    page.drawText('ogiX-digital UG (haftungsbeschränkt)', { x: 50, y: height - 50, size: 12, font });
-    page.drawText('Alt-Griesheim 88a', { x: 50, y: height - 70, size: 10, font });
-    page.drawText('D-65933 Frankfurt am Main', { x: 50, y: height - 85, size: 10, font });
+    let yOffset = height - 40;
+    page.drawText('ogiX-digital UG (haftungsbeschränkt)', { x: 40, y: yOffset, size: 12, font: boldFont });
+    yOffset -= 20;
+    page.drawText('Alt-Griesheim 88a', { x: 40, y: yOffset, size: 10, font });
+    yOffset -= 15;
+    page.drawText('D-65933 Frankfurt am Main', { x: 40, y: yOffset, size: 10, font });
 
     // Add offer details
-    page.drawText(`Angebot Nr. ${offer.number}`, { x: 50, y: height - 120, size: 14, font });
-    page.drawText(`Datum: ${offer.date.toLocaleDateString('de-DE')}`, { x: 50, y: height - 140, size: 10, font });
+    yOffset -= 40;
+    page.drawText(`Angebot Nr. ${offer.number}`, { x: 40, y: yOffset, size: 14, font: boldFont });
+    yOffset -= 20;
+    page.drawText(`Datum: ${offer.date.toLocaleDateString('de-DE')}`, { x: 40, y: yOffset, size: 10, font });
 
     // Add customer details
-    page.drawText(`${offer.customer.name}`, { x: 300, y: height - 120, size: 12, font });
-    // Add more customer details as needed
-
+    yOffset = height - 150;
+    page.drawText('Kunde:', { x: 300, y: yOffset, size: 12, font: boldFont });
+    yOffset -= 20;
+    page.drawText(offer.customer.name, { x: 300, y: yOffset, size: 10, font });
+    yOffset -= 15;
+    if (offer.customer.address) {
+      page.drawText(offer.customer.address, { x: 300, y: yOffset, size: 10, font });
+      yOffset -= 15;
+    }
+    
     // Add services table
-    let yOffset = height - 200;
-    page.drawText('Pos.', { x: 50, y: yOffset, size: 10, font });
-    page.drawText('Beschreibung', { x: 100, y: yOffset, size: 10, font });
-    page.drawText('Menge', { x: 300, y: yOffset, size: 10, font });
-    page.drawText('Einzelpreis', { x: 400, y: yOffset, size: 10, font });
-    page.drawText('Gesamtpreis', { x: 500, y: yOffset, size: 10, font });
+    yOffset = height - 250;
+    page.drawText('Pos.', { x: 40, y: yOffset, size: 10, font: boldFont });
+    page.drawText('Beschreibung', { x: 80, y: yOffset, size: 10, font: boldFont });
+    page.drawText('Menge', { x: 300, y: yOffset, size: 10, font: boldFont });
+    page.drawText('Einzelpreis', { x: 380, y: yOffset, size: 10, font: boldFont });
+    page.drawText('Gesamtpreis', { x: 480, y: yOffset, size: 10, font: boldFont });
 
     yOffset -= 20;
     offer.offerServices.forEach((item, index) => {
-      page.drawText(`${index + 1}`, { x: 50, y: yOffset, size: 10, font });
-      page.drawText(item.service.name, { x: 100, y: yOffset, size: 10, font });
+      page.drawText(`${index + 1}`, { x: 40, y: yOffset, size: 10, font });
+      page.drawText(item.service.name, { x: 80, y: yOffset, size: 10, font });
       page.drawText(item.quantity.toString(), { x: 300, y: yOffset, size: 10, font });
-      page.drawText(`${item.unitPrice.toFixed(2)} €`, { x: 400, y: yOffset, size: 10, font });
-      page.drawText(`${(item.quantity * item.unitPrice).toFixed(2)} €`, { x: 500, y: yOffset, size: 10, font });
+      page.drawText(`${item.unitPrice.toFixed(2)} €`, { x: 380, y: yOffset, size: 10, font });
+      page.drawText(`${(item.quantity * item.unitPrice).toFixed(2)} €`, { x: 480, y: yOffset, size: 10, font });
       yOffset -= 20;
     });
 
@@ -85,15 +98,19 @@ export async function GET(
     const total = taxableAmount + tax;
 
     yOffset -= 20;
-    page.drawText(`Zwischensumme: ${subtotal.toFixed(2)} €`, { x: 400, y: yOffset, size: 10, font });
+    page.drawText(`Zwischensumme:`, { x: 380, y: yOffset, size: 10, font: boldFont });
+    page.drawText(`${subtotal.toFixed(2)} €`, { x: 480, y: yOffset, size: 10, font });
     if (discount > 0) {
       yOffset -= 20;
-      page.drawText(`Rabatt (${offer.discountPercentage}%): ${discount.toFixed(2)} €`, { x: 400, y: yOffset, size: 10, font });
+      page.drawText(`Rabatt (${offer.discountPercentage}%):`, { x: 380, y: yOffset, size: 10, font });
+      page.drawText(`${discount.toFixed(2)} €`, { x: 480, y: yOffset, size: 10, font });
     }
     yOffset -= 20;
-    page.drawText(`MwSt. (${offer.taxPercentage}%): ${tax.toFixed(2)} €`, { x: 400, y: yOffset, size: 10, font });
+    page.drawText(`MwSt. (${offer.taxPercentage}%):`, { x: 380, y: yOffset, size: 10, font });
+    page.drawText(`${tax.toFixed(2)} €`, { x: 480, y: yOffset, size: 10, font });
     yOffset -= 20;
-    page.drawText(`Gesamtbetrag: ${total.toFixed(2)} €`, { x: 400, y: yOffset, size: 12, font });
+    page.drawText(`Gesamtbetrag:`, { x: 380, y: yOffset, size: 12, font: boldFont });
+    page.drawText(`${total.toFixed(2)} €`, { x: 480, y: yOffset, size: 12, font: boldFont });
 
     // Serialize the PDF to bytes
     const pdfBytes = await pdfDoc.save();
@@ -102,7 +119,7 @@ export async function GET(
       status: 200,
       headers: {
         'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="Angebot_${offer.number}.pdf"`,
+        'Content-Disposition': `attachment; filename=Angebot_${offer.number}.pdf`,
       },
     });
   } catch (error) {
