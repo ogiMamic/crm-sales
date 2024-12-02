@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { name, email, phone, company } = await req.json()
+    const { name, email, phone, company, address } = await req.json()
 
     const customer = await prisma.customer.create({
       data: {
@@ -43,6 +43,7 @@ export async function POST(req: NextRequest) {
         email,
         phone,
         company,
+        address,
         userId
       }
     })

@@ -13,6 +13,7 @@ type CustomerFormData = {
   email: string
   phone: string
   company: string
+  address: string
   notes: string
 }
 
@@ -29,6 +30,7 @@ export function CreateCustomerForm({ onCustomerAdded, onCancel }: CreateCustomer
     email: '',
     phone: '',
     company: '',
+    address: '',
     notes: '',
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -123,6 +125,16 @@ export function CreateCustomerForm({ onCustomerAdded, onCancel }: CreateCustomer
           id="company"
           name="company"
           value={formData.company}
+          onChange={handleChange}
+          className="w-full text-primary"
+        />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="address" className="text-primary">Address</Label>
+        <Input
+          id="address"
+          name="address"
+          value={formData.address}
           onChange={handleChange}
           className="w-full text-primary"
         />

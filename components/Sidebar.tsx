@@ -17,7 +17,8 @@ import {
   ClipboardList,
   Mail,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Handshake
 } from 'lucide-react'
 
 const routes = [
@@ -45,6 +46,11 @@ const routes = [
     label: 'Rechnungen',
     icon: FileText,
     href: '/invoices',
+  },
+  {
+    label: 'Dienstleistungen',
+    icon: Handshake,
+    href: '/dienstleistungen',
   },
   {
     label: 'Nachrichten',

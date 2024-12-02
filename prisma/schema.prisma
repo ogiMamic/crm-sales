@@ -14,6 +14,7 @@ model Customer {
   id        String   @id @default(uuid())
   name      String
   email     String
+  address   String
   phone     String?
   company   String?
   createdAt DateTime @default(now())
@@ -22,27 +23,46 @@ model Customer {
   offers    Offer[]
 }
 
-model Offer {
-  id         String   @id @default(uuid())
-  number     String   @unique
-  customerId String
-  customer   Customer @relation(fields: [customerId], references: [id])
-  date       DateTime
-  status     String
-  amount     Float
-  product    String
-  pricingType String
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+model Service {
+  id           String        @id @default(uuid())
+  name         String        @unique
+  description  String?
+  defaultPrice Float
+  priceType    String        // "FIXED" or "HOURLY"
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  offerServices OfferService[]
 }
 
-model ProductPrice {
+model Offer {
+  id                 String        @id @default(uuid())
+  number             String        @unique
+  customerId         String
+  customer           Customer      @relation(fields: [customerId], references: [id])
+  date               DateTime
+  status             String
+  subtotalAmount     Float
+  taxPercentage      Float         @default(19)
+  taxAmount          Float
+  discountPercentage Float?
+  discountAmount     Float?
+  totalAmount        Float
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+  offerServices      OfferService[]
+}
+
+model OfferService {
   id          String   @id @default(uuid())
-  productName String
-  priceType   String   // "FIXED" or "HOURLY"
-  amount      Float
+  offerId     String
+  offer       Offer    @relation(fields: [offerId], references: [id])
+  serviceId   String
+  service     Service  @relation(fields: [serviceId], references: [id])
+  quantity    Int
+  unitPrice   Float
+  totalPrice  Float
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  @@unique([productName, priceType])
+  @@unique([offerId, serviceId])
 }

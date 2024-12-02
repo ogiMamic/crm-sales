@@ -130,9 +130,17 @@ export default function OffersPage() {
       <Card className="mb-6">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-2xl font-bold">Angebote</CardTitle>
-          <CreateOfferDialog 
-            onCreateOffer={handleCreateOffer} 
-            lastOfferNumber={offers.length > 0 ? offers[offers.length - 1].number : 'A000'}
+          <CreateOfferDialog
+            onCreateOffer={handleCreateOffer}
+            lastOfferNumber={
+              offers.length > 0
+                ? offers.reduce((max, offer) => {
+                  const currentNum = parseInt(offer.number.slice(1), 10); // Ekstrakcija numeričkog dela
+                  const maxNum = parseInt(max.slice(1), 10);
+                  return currentNum > maxNum ? offer.number : max;
+                }, 'A000') // Početna vrednost je 'A000'
+                : 'A000'
+            }
           />
         </CardHeader>
         <CardContent>
@@ -167,7 +175,7 @@ export default function OffersPage() {
                   <TableCell>{offer.product}</TableCell>
                   <TableCell>{offer.pricingType === 'hourly' ? 'Pro Stunde' : 'Pauschal'}</TableCell>
                   <TableCell className="text-right">
-                    {offer.amount.toFixed(2)} € 
+                    {offer.amount.toFixed(2)} €
                   </TableCell>
                   <TableCell>
                     <DropdownMenu>
@@ -178,7 +186,7 @@ export default function OffersPage() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <EditOfferDialog 
+                        <EditOfferDialog
                           offer={offer}
                           onEditOffer={handleEditOffer}
                           customers={customers}

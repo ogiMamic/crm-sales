@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, ChangeEvent } from 'react'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -19,12 +19,12 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuLabel, 
-  DropdownMenuSeparator, 
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
   DropdownMenuCheckboxItem,
 } from "@/components/ui/dropdown-menu"
@@ -36,6 +36,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
 import { toast, useToast } from "@/hooks/use-toast"
+import { CreateServiceForm } from '@/components/CreateServiceForm'
 
 type Customer = {
   id: string
@@ -49,38 +50,47 @@ type Customer = {
   userId: string
 }
 
+type Service = {
+  id: string
+  name: string
+  description: string
+  defaultPrice: number
+  priceType: 'FIXED' | 'HOURLY'
+  createdAt: string
+  updatedAt: string
+}
+
 type TimeFilter = '7days' | '30days' | '90days' | 'all'
 
-export default function CustomersPage() {
-  const [customers, setCustomers] = useState<Customer[]>([])
+export default function ServicesPage() {
+  const [services, setServices] = useState<Service[]>([])
   const [searchTerm, setSearchTerm] = useState("")
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
-  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null)
   const [timeFilter, setTimeFilter] = useState<TimeFilter>('all')
-  const [selectedColumns, setSelectedColumns] = useState<string[]>(['name', 'email', 'phone', 'company','address', 'createdAt'])
+  const [selectedColumns, setSelectedColumns] = useState<string[]>(['name', 'description', 'defaultPrice', 'priceType', 'createdAt'])
   const { isSignedIn, user } = useUser()
 
   useEffect(() => {
     if (isSignedIn && user) {
-      fetchCustomers()
+      fetchServices()
     } else {
       setIsLoading(false)
     }
   }, [isSignedIn, user])
 
-  const fetchCustomers = async () => {
+  const fetchServices = async () => {
     try {
       setIsLoading(true)
       setError(null)
-      const response = await fetch('/api/customers')
+      const response = await fetch('/api/dienstleistungen')
       if (!response.ok) {
         throw new Error('Failed to fetch customers')
       }
       const data = await response.json()
-      setCustomers(data)
+      setServices(data)
     } catch (error) {
       console.error('Error fetching customers:', error)
       setError('Failed to fetch customers. Please try again later.')
@@ -89,51 +99,51 @@ export default function CustomersPage() {
     }
   }
 
-  const handleCustomerAdded = () => {
-    fetchCustomers()
+  const handleServiceAdded = () => {
+    fetchServices()
     setIsAddDialogOpen(false)
     toast({
-      title: "Customer Added",
-      description: "New customer has been successfully added.",
+      title: "Service Added",
+      description: "New service has been successfully added.",
     })
   }
 
   const handleCustomerUpdated = () => {
-    fetchCustomers()
+    fetchServices()
     setIsEditDialogOpen(false)
     toast({
-      title: "Customer Updated",
-      description: "Customer information has been successfully updated.",
+      title: "Service Updated",
+      description: "Service information has been successfully updated.",
     })
   }
 
   const handleDeleteCustomer = async (id: string) => {
-    if (window.confirm('Are you sure you want to delete this customer?')) {
+    if (window.confirm('Are you sure you want to delete this service?')) {
       try {
-        const response = await fetch(`/api/customers/${id}`, {
+        const response = await fetch(`/api/dienstleistungen/${id}`, {
           method: 'DELETE',
         })
         if (!response.ok) {
-          throw new Error('Failed to delete customer')
+          throw new Error('Failed to delete service')
         }
-        fetchCustomers()
+        fetchServices()
         toast({
-          title: "Customer Deleted",
-          description: "Customer has been successfully removed.",
+          title: "Service Deleted",
+          description: "Service has been successfully removed.",
         })
       } catch (error) {
-        console.error('Error deleting customer:', error)
-        setError('Failed to delete customer. Please try again.')
+        console.error('Error deleting service:', error)
+        setError('Failed to delete service. Please try again.')
       }
     }
   }
 
-  const [editingCustomer, setEditingCustomer] = useState<string | null>(null)
-  const [editForm, setEditForm] = useState<Partial<Customer>>({})
+  const [editingService, setEditingService] = useState<string | null>(null)
+  const [editForm, setEditForm] = useState<Partial<Service>>({})
 
-  const handleEditClick = (customer: Customer) => {
-    setEditingCustomer(customer.id)
-    setEditForm(customer)
+  const handleEditClick = (service: Service) => {
+    setEditingService(service.id)
+    setEditForm(service)
   }
 
   const handleEditChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -142,7 +152,7 @@ export default function CustomersPage() {
 
   const handleEditSubmit = async () => {
     try {
-      const response = await fetch(`/api/customers/${editingCustomer}`, {
+      const response = await fetch(`/api/dienstleistungen/${editingService}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -150,35 +160,34 @@ export default function CustomersPage() {
         body: JSON.stringify(editForm),
       })
       if (!response.ok) {
-        throw new Error('Failed to update customer')
+        throw new Error('Failed to update service')
       }
-      fetchCustomers()
-      setEditingCustomer(null)
+      fetchServices()
+      setEditingService(null)
       toast({
-        title: "Customer Updated",
-        description: "Customer information has been successfully updated.",
+        title: "Service Updated",
+        description: "Service information has been successfully updated.",
       })
     } catch (error) {
-      console.error('Error updating customer:', error)
-      setError('Failed to update customer. Please try again.')
+      console.error('Error updating service:', error)
+      setError('Failed to update service. Please try again.')
     }
   }
 
   const handleEditCancel = () => {
-    setEditingCustomer(null)
+    setEditingService(null)
     setEditForm({})
   }
 
-  const filteredCustomers = customers.filter((customer) => {
-    const matchesSearch = 
-      customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      customer.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      customer.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      customer.address.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredServices = services.filter((service) => {
+    const matchesSearch =
+      service.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      service.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      service.priceType.toString().includes(searchTerm.toLowerCase())
 
-    const customerDate = new Date(customer.createdAt)
+    const serviceDate = new Date(service.createdAt)
     const now = new Date()
-    const daysDifference = (now.getTime() - customerDate.getTime()) / (1000 * 3600 * 24)
+    const daysDifference = (now.getTime() - serviceDate.getTime()) / (1000 * 3600 * 24)
 
     switch (timeFilter) {
       case '7days':
@@ -216,21 +225,21 @@ export default function CustomersPage() {
           <DialogTrigger asChild>
             <Button>
               <PlusCircle className="mr-2 h-4 w-4" />
-              Add Customer
+              Add Service
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[425px] bg-white">
             <DialogHeader>
-              <DialogTitle className='text-primary'>Add New Customer</DialogTitle>
+              <DialogTitle className='text-primary'>Add New Service</DialogTitle>
               <DialogDescription>
-                Enter the details of the new customer below.
+                Enter the details of the new service below.
               </DialogDescription>
             </DialogHeader>
-            <CreateCustomerForm onCustomerAdded={handleCustomerAdded} onCancel={() => setIsAddDialogOpen(false)} />
+            <CreateServiceForm onServiceAdded={handleServiceAdded} onCancel={() => setIsAddDialogOpen(false)} />
           </DialogContent>
         </Dialog>
       </div>
-      
+
       {error && (
         <Card className="bg-red-50 border-red-200">
           <CardContent className="pt-6">
@@ -239,10 +248,10 @@ export default function CustomersPage() {
         </Card>
       )}
 
-<Card>
+      <Card>
         <CardHeader>
-          <CardTitle>Customer List</CardTitle>
-          <CardDescription>Manage and view all your customers here.</CardDescription>
+          <CardTitle>Service List</CardTitle>
+          <CardDescription>Manage and view all your services here.</CardDescription>
         </CardHeader>
         <CardContent>
           {/* ... (search i filter kontrole ostaju iste) */}
@@ -256,87 +265,87 @@ export default function CustomersPage() {
                 <TableHeader>
                   <TableRow>
                     {selectedColumns.includes('name') && <TableHead>Name</TableHead>}
-                    {selectedColumns.includes('email') && <TableHead>Email</TableHead>}
-                    {selectedColumns.includes('phone') && <TableHead>Phone</TableHead>}
-                    {selectedColumns.includes('company') && <TableHead>Company</TableHead>}
-                    {selectedColumns.includes('address') && <TableHead>Address</TableHead>}
+                    {selectedColumns.includes('description') && <TableHead>Description</TableHead>}
+                    {selectedColumns.includes('defaultPrice') && <TableHead>Default Price</TableHead>}
+                    {selectedColumns.includes('priceType') && <TableHead>Price Type</TableHead>}
                     {selectedColumns.includes('createdAt') && <TableHead>Created At</TableHead>}
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredCustomers.map((customer) => (
-                    <TableRow key={customer.id}>
+                  {filteredServices.map((service) => (
+                    <TableRow key={service.id}>
                       {selectedColumns.includes('name') && (
                         <TableCell className="font-medium">
-                          {editingCustomer === customer.id ? (
-                            <Input 
-                              name="name" 
-                              value={editForm.name || ''} 
+                          {editingService === service.id ? (
+                            <Input
+                              name="name"
+                              value={editForm.name || ''}
                               onChange={handleEditChange}
                             />
                           ) : (
-                            customer.name
+                            service.name
                           )}
                         </TableCell>
                       )}
-                      {selectedColumns.includes('email') && (
+                      {selectedColumns.includes('description') && (
                         <TableCell>
-                          {editingCustomer === customer.id ? (
-                            <Input 
-                              name="email" 
-                              value={editForm.email || ''} 
+                          {editingService === service.id ? (
+                            <Input
+                              name="description"
+                              value={editForm.description || ''}
                               onChange={handleEditChange}
                             />
                           ) : (
-                            customer.email
+                            service.description
                           )}
                         </TableCell>
                       )}
-                      {selectedColumns.includes('phone') && (
+                      {selectedColumns.includes('defaultPrice') && (
                         <TableCell>
-                          {editingCustomer === customer.id ? (
-                            <Input 
-                              name="phone" 
-                              value={editForm.phone || ''} 
+                          {editingService === service.id ? (
+                            <Input
+                              name="defaultPrice"
+                              type="number"
+                              step="0.01"
+                              value={editForm.defaultPrice || ''}
                               onChange={handleEditChange}
                             />
                           ) : (
-                            customer.phone
+                            service.defaultPrice
                           )}
                         </TableCell>
                       )}
-                      {selectedColumns.includes('company') && (
+                      {selectedColumns.includes('priceType') && (
                         <TableCell>
-                          {editingCustomer === customer.id ? (
-                            <Input 
-                              name="company" 
-                              value={editForm.company || ''} 
-                              onChange={handleEditChange}
-                            />
+                          {editingService === service.id ? (
+                            <Select
+                              value={editForm.priceType || ''}
+                              onValueChange={(value) =>
+                                handleEditChange({
+                                  target: { name: 'priceType', value } as ChangeEvent<HTMLInputElement>['target'],
+                                } as ChangeEvent<HTMLInputElement>)
+                              }
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select Price Type" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="FIXED">FIXED</SelectItem>
+                                <SelectItem value="HOURLY">HOURLY</SelectItem>
+                              </SelectContent>
+                            </Select>
                           ) : (
-                            customer.company
+                            service.priceType
                           )}
                         </TableCell>
                       )}
-                      {selectedColumns.includes('address') && (
-                        <TableCell>
-                          {editingCustomer === customer.id ? (
-                            <Input 
-                              name="address" 
-                              value={editForm.address || ''} 
-                              onChange={handleEditChange}
-                            />
-                          ) : (
-                            customer.address
-                          )}
-                        </TableCell>
-                      )}
+
                       {selectedColumns.includes('createdAt') && (
-                        <TableCell>{new Date(customer.createdAt).toLocaleDateString()}</TableCell>
+                        <TableCell>{new Date(service.createdAt).toLocaleDateString()}</TableCell>
                       )}
                       <TableCell className="text-right">
-                        {editingCustomer === customer.id ? (
+                        {editingService === service.id ? (
                           <div className="flex justify-end space-x-2">
                             <Button onClick={handleEditSubmit} size="sm">
                               <Check className="h-4 w-4" />
@@ -355,11 +364,11 @@ export default function CustomersPage() {
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                               <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                              <DropdownMenuItem onClick={() => handleEditClick(customer)}>
+                              <DropdownMenuItem onClick={() => handleEditClick(service)}>
                                 Edit
                               </DropdownMenuItem>
                               <DropdownMenuSeparator />
-                              <DropdownMenuItem onClick={() => handleDeleteCustomer(customer.id)}>
+                              <DropdownMenuItem onClick={() => handleDeleteCustomer(service.id)}>
                                 Delete
                               </DropdownMenuItem>
                             </DropdownMenuContent>
