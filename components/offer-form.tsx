@@ -144,8 +144,35 @@ export function OfferForm({ customers, services, initialData, onClose }: OfferFo
 
   const totals = calculateTotals()
 
-  const handleGeneratePDF = () => {
-    alert('Generating PDF...')
+  const handleGeneratePDF = async () => {
+    const offerId = form.getValues('id');
+    if (offerId) {
+      try {
+        const response = await fetch(`/api/offers/${offerId}/pdf`, {
+          method: 'GET',
+        });
+
+        if (response.ok) {
+          const blob = await response.blob();
+          const url = window.URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = `Angebot_${offerId}.pdf`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          window.URL.revokeObjectURL(url);
+        } else {
+          console.error('Failed to generate PDF');
+          alert('Failed to generate PDF. Please try again.');
+        }
+      } catch (error) {
+        console.error('Error generating PDF:', error);
+        alert('An error occurred while generating the PDF. Please try again.');
+      }
+    } else {
+      alert('Cannot generate PDF: Offer ID is not available');
+    }
   }
 
   const handleGenerateInvoice = () => {

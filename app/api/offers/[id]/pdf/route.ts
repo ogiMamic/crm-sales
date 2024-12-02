@@ -1,139 +1,99 @@
-import { NextResponse } from 'next/server'
-import { PrismaClient } from '@prisma/client'
-import PDFDocument from 'pdfkit'
-import path from 'path'
-import fs from 'fs'
-
-const prisma = new PrismaClient()
+import { NextRequest, NextResponse } from 'next/server';
+import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
+import prisma from '@/lib/prisma';
 
 export async function GET(
-  request: Request,
+  request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
+    const offerId = params.id;
+    
+    // Fetch offer data from the database using the existing Prisma client
     const offer = await prisma.offer.findUnique({
-      where: { id: params.id },
-      include: { customer: true },
-    })
+      where: { id: offerId },
+      include: {
+        customer: true,
+        offerServices: {
+          include: {
+            service: true
+          }
+        }
+      }
+    });
 
     if (!offer) {
-      return NextResponse.json({ error: 'Angebot nicht gefunden' }, { status: 404 })
+      return NextResponse.json({ error: 'Offer not found' }, { status: 404 });
     }
 
-    const fontPath = path.join(process.cwd(), 'app', 'public', 'fonts', 'Roboto-Regular.ttf')
-    const boldFontPath = path.join(process.cwd(), 'app', 'public', 'fonts', 'Roboto-Bold.ttf')
-    
-    if (!fs.existsSync(fontPath) || !fs.existsSync(boldFontPath)) {
-      console.error('Font files not found')
-      return NextResponse.json({ error: 'Font files not found' }, { status: 500 })
+    // Create a new PDF document
+    const pdfDoc = await PDFDocument.create();
+    const page = pdfDoc.addPage([595.276, 841.890]); // A4 size
+    const { width, height } = page.getSize();
+    const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+
+    // Add company details
+    page.drawText('ogiX-digital UG (haftungsbeschränkt)', { x: 50, y: height - 50, size: 12, font });
+    page.drawText('Alt-Griesheim 88a', { x: 50, y: height - 70, size: 10, font });
+    page.drawText('D-65933 Frankfurt am Main', { x: 50, y: height - 85, size: 10, font });
+
+    // Add offer details
+    page.drawText(`Angebot Nr. ${offer.number}`, { x: 50, y: height - 120, size: 14, font });
+    page.drawText(`Datum: ${offer.date.toLocaleDateString('de-DE')}`, { x: 50, y: height - 140, size: 10, font });
+
+    // Add customer details
+    page.drawText(`${offer.customer.name}`, { x: 300, y: height - 120, size: 12, font });
+    // Add more customer details as needed
+
+    // Add services table
+    let yOffset = height - 200;
+    page.drawText('Pos.', { x: 50, y: yOffset, size: 10, font });
+    page.drawText('Beschreibung', { x: 100, y: yOffset, size: 10, font });
+    page.drawText('Menge', { x: 300, y: yOffset, size: 10, font });
+    page.drawText('Einzelpreis', { x: 400, y: yOffset, size: 10, font });
+    page.drawText('Gesamtpreis', { x: 500, y: yOffset, size: 10, font });
+
+    yOffset -= 20;
+    offer.offerServices.forEach((item, index) => {
+      page.drawText(`${index + 1}`, { x: 50, y: yOffset, size: 10, font });
+      page.drawText(item.service.name, { x: 100, y: yOffset, size: 10, font });
+      page.drawText(item.quantity.toString(), { x: 300, y: yOffset, size: 10, font });
+      page.drawText(`${item.unitPrice.toFixed(2)} €`, { x: 400, y: yOffset, size: 10, font });
+      page.drawText(`${(item.quantity * item.unitPrice).toFixed(2)} €`, { x: 500, y: yOffset, size: 10, font });
+      yOffset -= 20;
+    });
+
+    // Add totals
+    const subtotal = offer.offerServices.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
+    const discount = subtotal * (offer.discountPercentage || 0) / 100;
+    const taxableAmount = subtotal - discount;
+    const tax = taxableAmount * offer.taxPercentage / 100;
+    const total = taxableAmount + tax;
+
+    yOffset -= 20;
+    page.drawText(`Zwischensumme: ${subtotal.toFixed(2)} €`, { x: 400, y: yOffset, size: 10, font });
+    if (discount > 0) {
+      yOffset -= 20;
+      page.drawText(`Rabatt (${offer.discountPercentage}%): ${discount.toFixed(2)} €`, { x: 400, y: yOffset, size: 10, font });
     }
+    yOffset -= 20;
+    page.drawText(`MwSt. (${offer.taxPercentage}%): ${tax.toFixed(2)} €`, { x: 400, y: yOffset, size: 10, font });
+    yOffset -= 20;
+    page.drawText(`Gesamtbetrag: ${total.toFixed(2)} €`, { x: 400, y: yOffset, size: 12, font });
 
-    const doc = new PDFDocument({ 
-      size: 'A4',
-      margin: 50,
-      autoFirstPage: false,
-      font: '' // Prevent default font initialization
-    })
+    // Serialize the PDF to bytes
+    const pdfBytes = await pdfDoc.save();
 
-    doc.registerFont('Roboto', fontPath)
-    doc.registerFont('Roboto-Bold', boldFontPath)
-
-    const chunks: Buffer[] = []
-
-    return new Promise<NextResponse>((resolve, reject) => {
-      doc.on('data', (chunk) => chunks.push(chunk))
-      doc.on('end', () => {
-        const pdfBuffer = Buffer.concat(chunks)
-        resolve(
-          new NextResponse(pdfBuffer, {
-            status: 200,
-            headers: {
-              'Content-Type': 'application/pdf',
-              'Content-Disposition': `attachment; filename="angebot_${offer.number}.pdf"`,
-            },
-          })
-        )
-      })
-      doc.on('error', (err) => {
-        console.error('Fehler beim Generieren des PDFs:', err)
-        reject(new NextResponse(JSON.stringify({ error: 'Fehler beim Generieren des PDFs' }), { status: 500 }))
-      })
-
-      // Add the first page
-      doc.addPage()
-
-      // Header
-      doc.font('Roboto-Bold').fontSize(24).text('CRM Sales', { align: 'center' })
-      doc.moveDown(0.5)
-      doc.font('Roboto').fontSize(14).text('Ihr vertrauenswürdiger Partner für Vertriebslösungen', { align: 'center' })
-      doc.moveDown(1)
-
-      // Horizontal line
-      doc.moveTo(50, 150).lineTo(545, 150).stroke()
-      doc.moveDown(3)
-
-      // Offer title
-      doc.font('Roboto-Bold').fontSize(20).text('Angebot', { align: 'center' })
-      doc.moveDown(1)
-
-      // Offer details table
-      const tableTop = 230
-      const tableLeft = 50
-      const tableRight = 545
-      const rowHeight = 25
-
-      doc.font('Roboto-Bold').fontSize(12)
-      drawTableRow(doc, tableTop, tableLeft, tableRight, rowHeight, ['Angebotsnummer:', offer.number])
-      drawTableRow(doc, tableTop + rowHeight, tableLeft, tableRight, rowHeight, ['Kunde:', offer.customer.name])
-      drawTableRow(doc, tableTop + rowHeight * 2, tableLeft, tableRight, rowHeight, ['Datum:', new Date(offer.date).toLocaleDateString('de-DE')])
-      drawTableRow(doc, tableTop + rowHeight * 3, tableLeft, tableRight, rowHeight, ['Status:', offer.status])
-      drawTableRow(doc, tableTop + rowHeight * 4, tableLeft, tableRight, rowHeight, ['Produkt:', offer.product])
-      drawTableRow(doc, tableTop + rowHeight * 5, tableLeft, tableRight, rowHeight, ['Preistyp:', offer.pricingType === 'fixed' ? 'Pauschal' : 'Pro Stunde'])
-      drawTableRow(doc, tableTop + rowHeight * 6, tableLeft, tableRight, rowHeight, ['Betrag:', `${offer.amount.toFixed(2)} €`])
-
-      // Border around the table
-      doc.rect(tableLeft, tableTop, tableRight - tableLeft, rowHeight * 7).stroke()
-
-      // Thank you message
-      doc.moveDown(4)
-      doc.font('Roboto').fontSize(12).fillColor('gray')
-        .text('Vielen Dank, dass Sie unser Angebot gewählt haben.', { align: 'center' })
-
-      // Footer
-      const footerText = 'CRM Sales GmbH • Musterstraße 123 • 12345 Musterstadt'
-      const footerFontSize = 10
-      doc.font('Roboto').fontSize(footerFontSize)
-      
-      const footerWidth = doc.widthOfString(footerText)
-      const footerHeight = doc.currentLineHeight()
-
-      doc.page.margins.bottom = 0;
-
-      doc.on('pageAdded', () => {
-        const pageHeight = doc.page.height
-        const footerY = pageHeight - footerHeight - 20 // 20 is the margin from the bottom
-
-        doc.text(footerText, (doc.page.width - footerWidth) / 2, footerY, {
-          width: footerWidth,
-          align: 'center'
-        })
-      })
-
-      // Trigger the 'pageAdded' event for the first page
-      doc.emit('pageAdded')
-
-      doc.end()
-    })
+    return new NextResponse(pdfBytes, {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': `attachment; filename="Angebot_${offer.number}.pdf"`,
+      },
+    });
   } catch (error) {
-    console.error('Fehler beim Generieren des PDFs:', error)
-    return NextResponse.json({ error: 'Fehler beim Generieren des PDFs' }, { status: 500 })
+    console.error('Error generating PDF:', error);
+    return NextResponse.json({ error: 'Failed to generate PDF' }, { status: 500 });
   }
 }
 
-function drawTableRow(doc: PDFKit.PDFDocument, y: number, left: number, right: number, height: number, texts: string[]) {
-  const middle = left + (right - left) / 2
-
-  doc.rect(left, y, right - left, height).stroke()
-  doc.font('Roboto-Bold').text(texts[0], left + 5, y + 7, { width: middle - left - 10 })
-  doc.font('Roboto').text(texts[1], middle + 5, y + 7, { width: right - middle - 10 })
-}
