@@ -11,7 +11,6 @@ export async function GET(
   try {
     const offerId = params.id;
     
-    // Fetch offer data from the database using the existing Prisma client
     const offer = await prisma.offer.findUnique({
       where: { id: offerId },
       include: {
@@ -28,7 +27,6 @@ export async function GET(
       return NextResponse.json({ error: 'Offer not found' }, { status: 404 });
     }
 
-    // Create a new PDF document
     const pdfDoc = await PDFDocument.create();
     const page = pdfDoc.addPage([595.276, 841.890]); // A4 size
     const { width, height } = page.getSize();
@@ -71,24 +69,91 @@ export async function GET(
       page.drawText(offer.customer.address, { x: 300, y: yOffset, size: 10, font });
       yOffset -= 15;
     }
-    
-    // Add services table
+    // Add new text before services list
     yOffset = height - 250;
-    page.drawText('Pos.', { x: 40, y: yOffset, size: 10, font: boldFont });
-    page.drawText('Beschreibung', { x: 80, y: yOffset, size: 10, font: boldFont });
-    page.drawText('Menge', { x: 300, y: yOffset, size: 10, font: boldFont });
-    page.drawText('Einzelpreis', { x: 380, y: yOffset, size: 10, font: boldFont });
-    page.drawText('Gesamtpreis', { x: 480, y: yOffset, size: 10, font: boldFont });
-
-    yOffset -= 20;
-    offer.offerServices.forEach((item, index) => {
-      page.drawText(`${index + 1}`, { x: 40, y: yOffset, size: 10, font });
-      page.drawText(item.service.name, { x: 80, y: yOffset, size: 10, font });
-      page.drawText(item.quantity.toString(), { x: 300, y: yOffset, size: 10, font });
-      page.drawText(`${item.unitPrice.toFixed(2)} €`, { x: 380, y: yOffset, size: 10, font });
-      page.drawText(`${(item.quantity * item.unitPrice).toFixed(2)} €`, { x: 480, y: yOffset, size: 10, font });
+    const newText = 'Vielen Dank für Ihr Vertrauen in die ogiX-digital UG (haftungsbeschränkt).\nWir stellen Ihnen hiermit folgende Leistung im Angebot:';
+    const lines = newText.split('\n');
+    lines.forEach((line) => {
+      page.drawText(line, { x: 40, y: yOffset, size: 10, font });
       yOffset -= 20;
     });
+
+    // Add services table
+    yOffset -= 20;
+    const tableTop = yOffset;
+    const tableLeft = 40;
+    const columnWidths = [30, 200, 60, 80, 80, 65];
+    const rowHeight = 25;
+
+    // Draw table header
+    page.drawRectangle({
+      x: tableLeft,
+      y: yOffset - rowHeight,
+      width: columnWidths.reduce((a, b) => a + b),
+      height: rowHeight,
+      color: rgb(0.9, 0.9, 0.9),
+    });
+
+    const headers = ['Pos.', 'Beschreibung', 'Menge', 'Einzelpreis', 'Gesamtpreis', 'Preistyp'];
+    let xOffset = tableLeft;
+    headers.forEach((header, index) => {
+      page.drawText(header, {
+        x: xOffset + 5,
+        y: yOffset - 15,
+        size: 10,
+        font: boldFont,
+      });
+      xOffset += columnWidths[index];
+    });
+
+    yOffset -= rowHeight;
+
+    // Draw table rows
+    offer.offerServices.forEach((item, index) => {
+      xOffset = tableLeft;
+      page.drawLine({
+        start: { x: tableLeft, y: yOffset },
+        end: { x: tableLeft + columnWidths.reduce((a, b) => a + b), y: yOffset },
+        color: rgb(0.9, 0.9, 0.9),
+      });
+
+      page.drawText(`${index + 1}`, { x: xOffset + 5, y: yOffset - 15, size: 10, font });
+      xOffset += columnWidths[0];
+
+      page.drawText(item.service.name, { x: xOffset + 5, y: yOffset - 15, size: 10, font });
+      xOffset += columnWidths[1];
+
+      page.drawText(item.quantity.toString(), { x: xOffset + 5, y: yOffset - 15, size: 10, font });
+      xOffset += columnWidths[2];
+
+      page.drawText(`${item.unitPrice.toFixed(2)} €`, { x: xOffset + 5, y: yOffset - 15, size: 10, font });
+      xOffset += columnWidths[3];
+
+      page.drawText(`${(item.quantity * item.unitPrice).toFixed(2)} €`, { x: xOffset + 5, y: yOffset - 15, size: 10, font });
+      xOffset += columnWidths[4];
+
+      page.drawText(item.service.priceType, { x: xOffset + 5, y: yOffset - 15, size: 10, font });
+
+      yOffset -= rowHeight;
+    });
+
+    // Draw table bottom line
+    page.drawLine({
+      start: { x: tableLeft, y: yOffset },
+      end: { x: tableLeft + columnWidths.reduce((a, b) => a + b), y: yOffset },
+      color: rgb(0.9, 0.9, 0.9),
+    });
+
+    // Draw table side lines
+    let currentX = tableLeft;
+    for (let i = 0; i <= columnWidths.length; i++) {
+      page.drawLine({
+        start: { x: currentX, y: tableTop },
+        end: { x: currentX, y: yOffset },
+        color: rgb(0.9, 0.9, 0.9),
+      });
+      currentX += columnWidths[i] || 0;
+    }
 
     // Add totals
     const subtotal = offer.offerServices.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
@@ -97,7 +162,7 @@ export async function GET(
     const tax = taxableAmount * offer.taxPercentage / 100;
     const total = taxableAmount + tax;
 
-    yOffset -= 20;
+    yOffset -= 30;
     page.drawText(`Zwischensumme:`, { x: 380, y: yOffset, size: 10, font: boldFont });
     page.drawText(`${subtotal.toFixed(2)} €`, { x: 480, y: yOffset, size: 10, font });
     if (discount > 0) {
@@ -112,14 +177,13 @@ export async function GET(
     page.drawText(`Gesamtbetrag:`, { x: 380, y: yOffset, size: 12, font: boldFont });
     page.drawText(`${total.toFixed(2)} €`, { x: 480, y: yOffset, size: 12, font: boldFont });
 
-    // Serialize the PDF to bytes
     const pdfBytes = await pdfDoc.save();
 
     return new NextResponse(pdfBytes, {
       status: 200,
       headers: {
         'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename=Angebot_${offer.number}.pdf`,
+        'Content-Disposition': `attachment; filename="Angebot_${offer.number || offer.id}.pdf"`,
       },
     });
   } catch (error) {
