@@ -67,26 +67,26 @@ export function OfferList({ onEditOffer }: OfferListProps) {
   }
 
   return (
-    <div className="rounded-md border">
+    <div className="rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
       <Table>
         <TableHeader>
-          <TableRow>
-            <TableHead>Number</TableHead>
-            <TableHead>Customer</TableHead>
-            <TableHead>Date</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead className="text-right">Total Amount</TableHead>
-            <TableHead className="text-right">Actions</TableHead>
+          <TableRow className="bg-gray-100 dark:bg-gray-700">
+            <TableHead className="text-gray-900 dark:text-gray-100">Number</TableHead>
+            <TableHead className="text-gray-900 dark:text-gray-100">Customer</TableHead>
+            <TableHead className="text-gray-900 dark:text-gray-100">Date</TableHead>
+            <TableHead className="text-gray-900 dark:text-gray-100">Status</TableHead>
+            <TableHead className="text-gray-900 dark:text-gray-100 text-right">Total Amount</TableHead>
+            <TableHead className="text-gray-900 dark:text-gray-100 text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {offers.map((offer) => (
-            <TableRow key={offer.id}>
-              <TableCell>{offer.number}</TableCell>
-              <TableCell>{offer.customer.name}</TableCell>
-              <TableCell>{formatDate(new Date(offer.date))}</TableCell>
-              <TableCell>{offer.status}</TableCell>
-              <TableCell className="text-right">
+            <TableRow key={offer.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+              <TableCell className="text-gray-900 dark:text-gray-100">{offer.number}</TableCell>
+              <TableCell className="text-gray-900 dark:text-gray-100">{offer.customer.name}</TableCell>
+              <TableCell className="text-gray-900 dark:text-gray-100">{formatDate(new Date(offer.date))}</TableCell>
+              <TableCell className="text-gray-900 dark:text-gray-100">{offer.status}</TableCell>
+              <TableCell className="text-gray-900 dark:text-gray-100 text-right">
                 {new Intl.NumberFormat('de-DE', {
                   style: 'currency',
                   currency: 'EUR'
@@ -98,13 +98,14 @@ export function OfferList({ onEditOffer }: OfferListProps) {
                     size="icon"
                     variant="ghost"
                     onClick={() => onEditOffer(offer)}
+                    className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-gray-100"
                   >
                     <Pencil className="h-4 w-4" />
                   </Button>
                   <Button
                     size="icon"
                     variant="ghost"
-                    className="text-destructive"
+                    className="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
                     disabled={loading === offer.id}
                     onClick={() => handleDelete(offer.id)}
                   >

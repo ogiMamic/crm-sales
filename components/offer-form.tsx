@@ -146,9 +146,11 @@ export function OfferForm({ customers, services, initialData, onClose }: OfferFo
 
   return (
     <Dialog open={true} onOpenChange={onClose}>
-      <DialogContent className="max-w-[800px] max-h-[80vh] overflow-y-auto">
+      <DialogContent className="max-w-[800px] max-h-[80vh] overflow-y-auto bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100">
         <DialogHeader>
-          <DialogTitle>{initialData ? 'Edit Offer' : 'Create New Offer'}</DialogTitle>
+          <DialogTitle className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+            {initialData ? 'Edit Offer' : 'Create New Offer'}
+          </DialogTitle>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
@@ -158,13 +160,13 @@ export function OfferForm({ customers, services, initialData, onClose }: OfferFo
                 name="customerId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Customer</FormLabel>
+                    <FormLabel className="text-gray-700 dark:text-gray-300">Customer</FormLabel>
                     <Select
                       value={field.value}
                       onValueChange={field.onChange}
                     >
                       <FormControl>
-                        <SelectTrigger>
+                        <SelectTrigger className="bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
                           <SelectValue placeholder="Select customer" />
                         </SelectTrigger>
                       </FormControl>
@@ -185,14 +187,14 @@ export function OfferForm({ customers, services, initialData, onClose }: OfferFo
                 name="date"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Date</FormLabel>
+                    <FormLabel className="text-gray-700 dark:text-gray-300">Date</FormLabel>
                     <Popover>
                       <PopoverTrigger asChild>
                         <FormControl>
                           <Button
                             variant="outline"
                             className={cn(
-                              "w-full pl-3 text-left font-normal",
+                              "w-full pl-3 text-left font-normal bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100",
                               !field.value && "text-muted-foreground"
                             )}
                           >
@@ -224,8 +226,8 @@ export function OfferForm({ customers, services, initialData, onClose }: OfferFo
 
             <div className="space-y-4">
               <div className="flex justify-between items-center">
-                <h3 className="text-lg font-semibold">Services</h3>
-                <Button type="button" onClick={addService} variant="outline">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Services</h3>
+                <Button type="button" onClick={addService} variant="outline" className="bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
                   <Plus className="h-4 w-4 mr-2" />
                   Add Service
                 </Button>
@@ -234,17 +236,17 @@ export function OfferForm({ customers, services, initialData, onClose }: OfferFo
               <div className="max-h-[300px] overflow-y-auto border rounded-md">
                 <Table>
                   <TableHeader>
-                    <TableRow>
-                      <TableHead>Service</TableHead>
-                      <TableHead>Quantity</TableHead>
-                      <TableHead>Unit Price</TableHead>
-                      <TableHead>Price Type</TableHead>
-                      <TableHead>Actions</TableHead>
+                    <TableRow className="bg-gray-100 dark:bg-gray-700">
+                      <TableHead className="text-gray-900 dark:text-gray-100">Service</TableHead>
+                      <TableHead className="text-gray-900 dark:text-gray-100">Quantity</TableHead>
+                      <TableHead className="text-gray-900 dark:text-gray-100">Unit Price</TableHead>
+                      <TableHead className="text-gray-900 dark:text-gray-100">Price Type</TableHead>
+                      <TableHead className="text-gray-900 dark:text-gray-100">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {form.watch('services').map((service: OfferService, index: number) => (
-                      <TableRow key={index}>
+                      <TableRow key={index} className="bg-white dark:bg-gray-800">
                         <TableCell>
                           <FormField
                             control={form.control}
@@ -261,7 +263,7 @@ export function OfferForm({ customers, services, initialData, onClose }: OfferFo
                                 }}
                               >
                                 <FormControl>
-                                  <SelectTrigger>
+                                  <SelectTrigger className="bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
                                     <SelectValue placeholder="Select service" />
                                   </SelectTrigger>
                                 </FormControl>
@@ -291,6 +293,7 @@ export function OfferForm({ customers, services, initialData, onClose }: OfferFo
                                       field.onChange(parseInt(e.target.value))
                                       form.trigger('services')
                                     }}
+                                    className="bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                                   />
                                 </FormControl>
                               </FormItem>
@@ -313,13 +316,14 @@ export function OfferForm({ customers, services, initialData, onClose }: OfferFo
                                       field.onChange(parseFloat(e.target.value))
                                       form.trigger('services')
                                     }}
+                                    className="bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                                   />
                                 </FormControl>
                               </FormItem>
                             )}
                           />
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="text-gray-900 dark:text-gray-100">
                           {services.find(s => s.id === service.serviceId)?.priceType || '-'}
                         </TableCell>
                         <TableCell>
@@ -328,6 +332,7 @@ export function OfferForm({ customers, services, initialData, onClose }: OfferFo
                             variant="ghost"
                             size="icon"
                             onClick={() => removeService(index)}
+                            className="text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100"
                           >
                             <X className="h-4 w-4" />
                           </Button>
@@ -345,7 +350,7 @@ export function OfferForm({ customers, services, initialData, onClose }: OfferFo
                 name="taxPercentage"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Tax Percentage</FormLabel>
+                    <FormLabel className="text-gray-700 dark:text-gray-300">Tax Percentage</FormLabel>
                     <FormControl>
                       <Input
                         type="number"
@@ -356,6 +361,7 @@ export function OfferForm({ customers, services, initialData, onClose }: OfferFo
                           field.onChange(parseFloat(e.target.value))
                           form.trigger('taxPercentage')
                         }}
+                        className="bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                       />
                     </FormControl>
                   </FormItem>
@@ -367,7 +373,7 @@ export function OfferForm({ customers, services, initialData, onClose }: OfferFo
                 name="discountPercentage"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Discount Percentage</FormLabel>
+                    <FormLabel className="text-gray-700 dark:text-gray-300">Discount Percentage</FormLabel>
                     <FormControl>
                       <Input
                         type="number"
@@ -380,6 +386,7 @@ export function OfferForm({ customers, services, initialData, onClose }: OfferFo
                           field.onChange(value);
                           form.trigger('discountPercentage');
                         }}
+                        className="bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                       />
                     </FormControl>
                   </FormItem>
@@ -387,7 +394,7 @@ export function OfferForm({ customers, services, initialData, onClose }: OfferFo
               />
             </div>
 
-            <div className="space-y-2 text-right">
+            <div className="space-y-2 text-right text-gray-900 dark:text-gray-100">
               <div className="text-sm">
                 Subtotal: {new Intl.NumberFormat('de-DE', {
                   style: 'currency',
@@ -421,10 +428,15 @@ export function OfferForm({ customers, services, initialData, onClose }: OfferFo
                 type="button"
                 variant="outline"
                 onClick={onClose}
+                className="bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
               >
                 Cancel
               </Button>
-              <Button type="submit" disabled={loading}>
+              <Button 
+                type="submit" 
+                disabled={loading}
+                className="bg-blue-600 hover:bg-blue-700 text-white"
+              >
                 {loading ? 'Saving...' : 'Save Offer'}
               </Button>
             </div>
