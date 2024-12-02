@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 import prisma from '@/lib/prisma';
+import fs from 'fs/promises';
+import path from 'path';
 
 export async function GET(
   request: NextRequest,
@@ -31,6 +33,18 @@ export async function GET(
     const page = pdfDoc.addPage([595.276, 841.890]); // A4 size
     const { width, height } = page.getSize();
     const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+
+    // Add logo
+    const logoPath = path.join(process.cwd(), 'public', 'images', 'logo.png');
+    const logoImage = await fs.readFile(logoPath);
+    const logoImagePdf = await pdfDoc.embedPng(logoImage);
+    const logoDims = logoImagePdf.scale(0.7); // Adjust scale as needed
+    page.drawImage(logoImagePdf, {
+      x: width - logoDims.width - 40,
+      y: height - logoDims.height - 40,
+      width: logoDims.width,
+      height: logoDims.height,
+    });
 
     // Add company details
     page.drawText('ogiX-digital UG (haftungsbeschränkt)', { x: 50, y: height - 50, size: 12, font });
