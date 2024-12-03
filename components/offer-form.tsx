@@ -79,6 +79,7 @@ interface OfferFormProps {
 export function OfferForm({ customers, services, initialData, onClose }: OfferFormProps) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
+  const [pdfLoading, setPdfLoading] = useState(false)
 
   const form = useForm<OfferFormData>({
     defaultValues: {
@@ -148,6 +149,7 @@ export function OfferForm({ customers, services, initialData, onClose }: OfferFo
     const offerId = form.getValues('id');
     if (offerId) {
       try {
+        setPdfLoading(true);
         const response = await fetch(`/api/offers/${offerId}/pdf`, {
           method: 'GET',
         });
@@ -169,6 +171,8 @@ export function OfferForm({ customers, services, initialData, onClose }: OfferFo
       } catch (error) {
         console.error('Error generating PDF:', error);
         alert('An error occurred while generating the PDF. Please try again.');
+      } finally {
+        setPdfLoading(false);
       }
     } else {
       alert('Cannot generate PDF: Offer ID is not available');
@@ -419,6 +423,7 @@ export function OfferForm({ customers, services, initialData, onClose }: OfferFo
                         onChange={(e) => {
                           const value = e.target.value === '' ? null : parseFloat(e.target.value);
                           field.onChange(value);
+                          field.onChange(value);
                           form.trigger('discountPercentage');
                         }}
                         className="bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
@@ -464,10 +469,20 @@ export function OfferForm({ customers, services, initialData, onClose }: OfferFo
                   type="button"
                   variant="outline"
                   onClick={handleGeneratePDF}
+                  disabled={pdfLoading}
                   className="bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                 >
-                  <FileDown className="mr-2 h-4 w-4" />
-                  Generate PDF
+                  {pdfLoading ? (
+                    <>
+                      <span className="animate-spin mr-2">⏳</span>
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      <FileDown className="mr-2 h-4 w-4" />
+                      Generate PDF
+                    </>
+                  )}
                 </Button>
                 <Button
                   type="button"
