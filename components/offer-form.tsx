@@ -74,12 +74,14 @@ interface OfferFormProps {
   services: Service[];
   initialData?: any;
   onClose: () => void;
+  onOfferCreated?: (offer: any) => void;
 }
 
-export function OfferForm({ customers, services, initialData, onClose }: OfferFormProps) {
+export function OfferForm({ customers, services, initialData, onClose, onOfferCreated }: OfferFormProps) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [pdfLoading, setPdfLoading] = useState(false)
+  const [shouldReloadOffer, setShouldReloadOffer] = useState(false)
 
   const form = useForm<OfferFormData>({
     defaultValues: {
@@ -98,17 +100,25 @@ export function OfferForm({ customers, services, initialData, onClose }: OfferFo
       const url = data.id
         ? `/api/offers/${data.id}`
         : '/api/offers'
-      
-      await fetch(url, {
+    
+      const response = await fetch(url, {
         method: data.id ? 'PUT' : 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(data),
       })
-      
-      router.refresh()
-      onClose()
+
+      if (response.ok) {
+        const savedOffer = await response.json()
+        if (onOfferCreated) {
+          onOfferCreated(savedOffer)
+        }
+        router.refresh()
+        onClose()
+      } else {
+        console.error('Error saving offer:', await response.text())
+      }
     } catch (error) {
       console.error('Error saving offer:', error)
     } finally {
@@ -182,6 +192,26 @@ export function OfferForm({ customers, services, initialData, onClose }: OfferFo
   const handleGenerateInvoice = () => {
     alert('Converting to invoice...')
   }
+
+  useEffect(() => {
+    if (shouldReloadOffer) {
+      const reloadOffer = async () => {
+        try {
+          const response = await fetch(`/api/offers/${form.getValues('id')}`)
+          if (response.ok) {
+            const updatedOffer = await response.json()
+            form.reset(updatedOffer)
+          }
+        } catch (error) {
+          console.error('Error reloading offer:', error)
+        } finally {
+          setShouldReloadOffer(false)
+        }
+      }
+
+      reloadOffer()
+    }
+  }, [shouldReloadOffer, form])
 
   return (
     <Dialog open={true} onOpenChange={onClose}>

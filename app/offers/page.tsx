@@ -23,6 +23,7 @@ export default function OffersPage() {
   const [customers, setCustomers] = useState<Customer[]>([])
   const [services, setServices] = useState<Service[]>([])
   const [editingOffer, setEditingOffer] = useState<Offer | null>(null)
+  const [newOffer, setNewOffer] = useState<Offer | null>(null)
   const router = useRouter()
 
   useEffect(() => {
@@ -50,10 +51,18 @@ export default function OffersPage() {
   }
 
   const handleCloseDialog = () => {
-    
     setIsDialogOpen(false)
     setEditingOffer(null)
     router.refresh()
+  }
+
+  const handleOfferCreated = async (createdOffer: Offer) => {
+    const response = await fetch(`/api/offers/${createdOffer.id}`)
+    if (response.ok) {
+      const fullOfferData = await response.json()
+      setNewOffer(fullOfferData)
+    }
+    handleCloseDialog()
   }
 
   return (
@@ -62,13 +71,14 @@ export default function OffersPage() {
         <h1 className="text-4xl font-bold text-gray-600">Offers</h1>
         <Button onClick={handleCreateOffer}>Create New Offer</Button>
       </div>
-      <OfferList onEditOffer={handleEditOffer} />
+      <OfferList onEditOffer={handleEditOffer} newOffer={newOffer} />
       {isDialogOpen && (
         <OfferForm
           customers={customers}
           services={services}
           initialData={editingOffer}
           onClose={handleCloseDialog}
+          onOfferCreated={handleOfferCreated}
         />
       )}
     </div>

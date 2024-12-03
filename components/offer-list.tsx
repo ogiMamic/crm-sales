@@ -33,9 +33,10 @@ export interface Offer {
 
 interface OfferListProps {
   onEditOffer: (offer: Offer) => void;
+  newOffer: Offer | null;
 }
 
-export function OfferList({ onEditOffer }: OfferListProps) {
+export function OfferList({ onEditOffer, newOffer }: OfferListProps) {
   const router = useRouter()
   const [loading, setLoading] = useState<string | null>(null)
   const [offers, setOffers] = useState<Offer[]>([])
@@ -49,6 +50,12 @@ export function OfferList({ onEditOffer }: OfferListProps) {
 
     fetchOffers()
   }, [])
+
+  useEffect(() => {
+    if (newOffer) {
+      setOffers(prevOffers => [newOffer, ...prevOffers.filter(offer => offer.id !== newOffer.id)])
+    }
+  }, [newOffer])
 
   const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to delete this offer?')) return
