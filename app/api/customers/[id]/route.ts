@@ -49,7 +49,7 @@ export async function PATCH(
     }
 
     const { id } = params
-    const { name, email, phone, company } = await req.json()
+    const { name, email, phone, company, address } = await req.json()
 
     // Verify customer belongs to user
     const existingCustomer = await prisma.customer.findFirst({
@@ -69,7 +69,8 @@ export async function PATCH(
         name,
         email,
         phone,
-        company
+        company,
+        address
       }
     })
 

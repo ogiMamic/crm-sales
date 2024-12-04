@@ -73,6 +73,10 @@ export async function GET(
       page.drawText(offer.customer.address, { x: 300, y: yOffset, size: 10, font });
       yOffset -= 15;
     }
+    if (offer.customer.email) {
+      page.drawText(offer.customer.email, { x: 300, y: yOffset, size: 10, font });
+      yOffset -= 15;
+    }
 
     // Add new text before services list
     yOffset = height - 250;

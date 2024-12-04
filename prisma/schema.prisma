@@ -35,22 +35,24 @@ model Service {
 }
 
 model Offer {
-  id                 String        @id @default(uuid())
-  number             String        @unique
+  id                 String    @id @default(uuid())
+  number             String    @unique
   customerId         String
-  customer           Customer      @relation(fields: [customerId], references: [id])
+  customer           Customer  @relation(fields: [customerId], references: [id])
   date               DateTime
   status             String
   subtotalAmount     Float
-  taxPercentage      Float         @default(19)
+  taxPercentage      Float     @default(19)
   taxAmount          Float
   discountPercentage Float?
   discountAmount     Float?
   totalAmount        Float
-  createdAt          DateTime      @default(now())
-  updatedAt          DateTime      @updatedAt
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
   offerServices      OfferService[]
+  invoice            Invoice?
 }
+
 
 model OfferService {
   id          String   @id @default(uuid())
@@ -65,4 +67,24 @@ model OfferService {
   updatedAt   DateTime @updatedAt
 
   @@unique([offerId, serviceId])
+}
+
+
+model Invoice {
+  id              String    @id @default(uuid())
+  number          String    @unique
+  offerId         String    @unique // One offer can have only one invoice
+  offer           Offer     @relation(fields: [offerId], references: [id])
+  status          String    // e.g., "PAID", "PENDING", "OVERDUE"
+  issueDate       DateTime
+  dueDate         DateTime
+  paymentDate     DateTime?
+  subtotalAmount  Float
+  taxPercentage   Float     @default(19)
+  taxAmount       Float
+  discountAmount  Float?
+  totalAmount     Float
+  notes           String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 }
