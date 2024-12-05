@@ -561,15 +561,17 @@ export function OfferForm({ customers, services, initialData, onClose, onOfferCr
                       </>
                     )}
                   </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={handleGenerateInvoice}
-                    className="bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                  >
-                    <FileText className="mr-2 h-4 w-4" />
-                    Generate Invoice
-                  </Button>
+                  {initialData?.status === 'DRAFT' && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleGenerateInvoice}
+                      className="bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                    >
+                      <FileText className="mr-2 h-4 w-4" />
+                      Generate Invoice
+                    </Button>
+                  )}
                 </div>
                 <div className="space-x-2">
                   <Button
