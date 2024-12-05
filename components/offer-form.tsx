@@ -40,8 +40,10 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
+import { format, addDays } from 'date-fns'
 
 interface Customer {
   id: string;
@@ -85,15 +87,17 @@ export function OfferForm({ customers, services, initialData, onClose, onOfferCr
   const [shouldReloadOffer, setShouldReloadOffer] = useState(false)
   const [isInvoiceDialogOpen, setIsInvoiceDialogOpen] = useState(false)
   const [invoiceData, setInvoiceData] = useState({
-    dueDate: '',
+    dueDate: format(addDays(new Date(), 15), 'yyyy-MM-dd'),
     notes: ''
   })
+
+  const defaultDate = new Date(Date.now() + 15 * 24 * 60 * 60 * 1000); // 15 days from now
 
   const form = useForm<OfferFormData>({
     defaultValues: {
       id: initialData?.id || undefined,
       customerId: initialData?.customerId || '',
-      date: initialData?.date || new Date(),
+      date: initialData?.date || defaultDate,
       services: initialData?.offerServices || [],
       taxPercentage: initialData?.taxPercentage || 19,
       discountPercentage: initialData?.discountPercentage || 0,
@@ -591,30 +595,38 @@ export function OfferForm({ customers, services, initialData, onClose, onOfferCr
       </Dialog>
 
       <Dialog open={isInvoiceDialogOpen} onOpenChange={setIsInvoiceDialogOpen}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>Generate Invoice</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="dueDate">Due Date</Label>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="dueDate" className="text-right">
+                Due Date
+              </Label>
               <Input
                 id="dueDate"
                 type="date"
+                className="col-span-3"
                 value={invoiceData.dueDate}
                 onChange={(e) => setInvoiceData({ ...invoiceData, dueDate: e.target.value })}
               />
             </div>
-            <div>
-              <Label htmlFor="notes">Notes</Label>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="notes" className="text-right">
+                Notes
+              </Label>
               <Input
                 id="notes"
+                className="col-span-3"
                 value={invoiceData.notes}
                 onChange={(e) => setInvoiceData({ ...invoiceData, notes: e.target.value })}
               />
             </div>
-            <Button onClick={handleInvoiceSubmit}>Create Invoice</Button>
           </div>
+          <DialogFooter>
+            <Button onClick={handleInvoiceSubmit}>Create Invoice</Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </>
