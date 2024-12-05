@@ -595,37 +595,39 @@ export function OfferForm({ customers, services, initialData, onClose, onOfferCr
       </Dialog>
 
       <Dialog open={isInvoiceDialogOpen} onOpenChange={setIsInvoiceDialogOpen}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="sm:max-w-[425px] bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 shadow-lg rounded-lg border border-gray-200 dark:border-gray-700">
           <DialogHeader>
-            <DialogTitle>Generate Invoice</DialogTitle>
+            <DialogTitle className="text-xl font-semibold">Generate Invoice</DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="dueDate" className="text-right">
+              <Label htmlFor="dueDate" className="text-right text-sm font-medium">
                 Due Date
               </Label>
               <Input
                 id="dueDate"
                 type="date"
-                className="col-span-3"
+                className="col-span-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md"
                 value={invoiceData.dueDate}
                 onChange={(e) => setInvoiceData({ ...invoiceData, dueDate: e.target.value })}
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="notes" className="text-right">
+              <Label htmlFor="notes" className="text-right text-sm font-medium">
                 Notes
               </Label>
               <Input
                 id="notes"
-                className="col-span-3"
+                className="col-span-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md"
                 value={invoiceData.notes}
                 onChange={(e) => setInvoiceData({ ...invoiceData, notes: e.target.value })}
               />
             </div>
           </div>
           <DialogFooter>
-            <Button onClick={handleInvoiceSubmit}>Create Invoice</Button>
+            <Button onClick={handleInvoiceSubmit} className="bg-blue-600 hover:bg-blue-700 text-white">
+              Create Invoice
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
