@@ -41,6 +41,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import { Label } from '@/components/ui/label'
 
 interface Customer {
   id: string;
@@ -82,6 +83,11 @@ export function OfferForm({ customers, services, initialData, onClose, onOfferCr
   const [loading, setLoading] = useState(false)
   const [pdfLoading, setPdfLoading] = useState(false)
   const [shouldReloadOffer, setShouldReloadOffer] = useState(false)
+  const [isInvoiceDialogOpen, setIsInvoiceDialogOpen] = useState(false)
+  const [invoiceData, setInvoiceData] = useState({
+    dueDate: '',
+    notes: ''
+  })
 
   const form = useForm<OfferFormData>({
     defaultValues: {
@@ -190,7 +196,36 @@ export function OfferForm({ customers, services, initialData, onClose, onOfferCr
   }
 
   const handleGenerateInvoice = () => {
-    alert('Converting to invoice...')
+    setIsInvoiceDialogOpen(true)
+  }
+
+  const handleInvoiceSubmit = async () => {
+    try {
+      const response = await fetch('/api/invoices', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          offerId: form.getValues('id'),
+          dueDate: invoiceData.dueDate,
+          notes: invoiceData.notes,
+        }),
+      })
+
+      if (response.ok) {
+        const invoice = await response.json()
+        alert('Invoice created successfully!')
+        setIsInvoiceDialogOpen(false)
+        // Optionally, you can update the UI or redirect to the invoice page
+      } else {
+        console.error('Error creating invoice:', await response.text())
+        alert('Failed to create invoice. Please try again.')
+      }
+    } catch (error) {
+      console.error('Error creating invoice:', error)
+      alert('An error occurred while creating the invoice. Please try again.')
+    }
   }
 
   useEffect(() => {
@@ -214,345 +249,375 @@ export function OfferForm({ customers, services, initialData, onClose, onOfferCr
   }, [shouldReloadOffer, form])
 
   return (
-    <Dialog open={true} onOpenChange={onClose}>
-      <DialogContent className="max-w-[800px] max-h-[80vh] overflow-y-auto bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100">
-        <DialogHeader>
-          <DialogTitle className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-            {initialData ? 'Edit Offer' : 'Create New Offer'}
-          </DialogTitle>
-        </DialogHeader>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-            <div className="grid grid-cols-2 gap-6">
-              <FormField
-                control={form.control}
-                name="customerId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-gray-700 dark:text-gray-300">Customer</FormLabel>
-                    <Select
-                      value={field.value}
-                      onValueChange={field.onChange}
-                    >
-                      <FormControl>
-                        <SelectTrigger className="bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
-                          <SelectValue placeholder="Select customer" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {customers.map((customer) => (
-                          <SelectItem key={customer.id} value={customer.id}>
-                            {customer.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="date"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-gray-700 dark:text-gray-300">Date</FormLabel>
-                    <Popover>
-                      <PopoverTrigger asChild>
+    <>
+      <Dialog open={true} onOpenChange={onClose}>
+        <DialogContent className="max-w-[800px] max-h-[80vh] overflow-y-auto bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+              {initialData ? 'Edit Offer' : 'Create New Offer'}
+            </DialogTitle>
+          </DialogHeader>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+              <div className="grid grid-cols-2 gap-6">
+                <FormField
+                  control={form.control}
+                  name="customerId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-gray-700 dark:text-gray-300">Customer</FormLabel>
+                      <Select
+                        value={field.value}
+                        onValueChange={field.onChange}
+                      >
                         <FormControl>
-                          <Button
-                            variant="outline"
-                            className={cn(
-                              "w-full pl-3 text-left font-normal bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100",
-                              !field.value && "text-muted-foreground"
-                            )}
-                          >
-                            {field.value ? (
-                              formatDate(field.value)
-                            ) : (
-                              <span>Pick a date</span>
-                            )}
-                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                          </Button>
+                          <SelectTrigger className="bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+                            <SelectValue placeholder="Select customer" />
+                          </SelectTrigger>
                         </FormControl>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={field.value}
-                          onSelect={field.onChange}
-                          disabled={(date) =>
-                            date < new Date("1900-01-01")
-                          }
-                          initialFocus
-                        />
-                      </PopoverContent>
-                    </Popover>
-                  </FormItem>
-                )}
-              />
-            </div>
+                        <SelectContent>
+                          {customers.map((customer) => (
+                            <SelectItem key={customer.id} value={customer.id}>
+                              {customer.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </FormItem>
+                  )}
+                />
 
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Services</h3>
-                <Button type="button" onClick={addService} variant="outline" className="bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Service
-                </Button>
+                <FormField
+                  control={form.control}
+                  name="date"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-gray-700 dark:text-gray-300">Date</FormLabel>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant="outline"
+                              className={cn(
+                                "w-full pl-3 text-left font-normal bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100",
+                                !field.value && "text-muted-foreground"
+                              )}
+                            >
+                              {field.value ? (
+                                formatDate(field.value)
+                              ) : (
+                                <span>Pick a date</span>
+                              )}
+                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={field.value}
+                            onSelect={field.onChange}
+                            disabled={(date) =>
+                              date < new Date("1900-01-01")
+                            }
+                            initialFocus
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    </FormItem>
+                  )}
+                />
               </div>
 
-              <div className="max-h-[300px] overflow-y-auto border rounded-md">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="bg-gray-100 dark:bg-gray-700">
-                      <TableHead className="text-gray-900 dark:text-gray-100">Service</TableHead>
-                      <TableHead className="text-gray-900 dark:text-gray-100">Quantity</TableHead>
-                      <TableHead className="text-gray-900 dark:text-gray-100">Unit Price</TableHead>
-                      <TableHead className="text-gray-900 dark:text-gray-100">Price Type</TableHead>
-                      <TableHead className="text-gray-900 dark:text-gray-100">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {form.watch('services').map((service: OfferService, index: number) => (
-                      <TableRow key={index} className="bg-white dark:bg-gray-800">
-                        <TableCell>
-                          <FormField
-                            control={form.control}
-                            name={`services.${index}.serviceId`}
-                            render={({ field }) => (
-                              <Select
-                                value={field.value}
-                                onValueChange={(value) => {
-                                  field.onChange(value);
-                                  const selectedService = services.find(s => s.id === value);
-                                  if (selectedService) {
-                                    form.setValue(`services.${index}.unitPrice`, selectedService.defaultPrice);
-                                  }
-                                }}
-                              >
-                                <FormControl>
-                                  <SelectTrigger className="bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
-                                    <SelectValue placeholder="Select service" />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  {services
-                                    .filter(s => 
-                                      !form.getValues('services').some(
-                                        (selectedService, i) => 
-                                          i !== index && selectedService.serviceId === s.id
-                                      )
-                                    )
-                                    .map((service) => (
-                                      <SelectItem key={service.id} value={service.id}>
-                                        {service.name}
-                                      </SelectItem>
-                                    ))
-                                  }
-                                </SelectContent>
-                              </Select>
-                            )}
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <FormField
-                            control={form.control}
-                            name={`services.${index}.quantity`}
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormControl>
-                                  <Input
-                                    type="number"
-                                    min="1"
-                                    {...field}
-                                    onChange={e => {
-                                      field.onChange(parseInt(e.target.value))
-                                      form.trigger('services')
-                                    }}
-                                    className="bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                                  />
-                                </FormControl>
-                              </FormItem>
-                            )}
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <FormField
-                            control={form.control}
-                            name={`services.${index}.unitPrice`}
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormControl>
-                                  <Input
-                                    type="number"
-                                    step="0.01"
-                                    min="0"
-                                    {...field}
-                                    onChange={e => {
-                                      field.onChange(parseFloat(e.target.value))
-                                      form.trigger('services')
-                                    }}
-                                    className="bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                                  />
-                                </FormControl>
-                              </FormItem>
-                            )}
-                          />
-                        </TableCell>
-                        <TableCell className="text-gray-900 dark:text-gray-100">
-                          {services.find(s => s.id === service.serviceId)?.priceType || '-'}
-                        </TableCell>
-                        <TableCell>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => removeService(index)}
-                            className="text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100"
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
-                        </TableCell>
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Services</h3>
+                  <Button type="button" onClick={addService} variant="outline" className="bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Service
+                  </Button>
+                </div>
+
+                <div className="max-h-[300px] overflow-y-auto border rounded-md">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="bg-gray-100 dark:bg-gray-700">
+                        <TableHead className="text-gray-900 dark:text-gray-100">Service</TableHead>
+                        <TableHead className="text-gray-900 dark:text-gray-100">Quantity</TableHead>
+                        <TableHead className="text-gray-900 dark:text-gray-100">Unit Price</TableHead>
+                        <TableHead className="text-gray-900 dark:text-gray-100">Price Type</TableHead>
+                        <TableHead className="text-gray-900 dark:text-gray-100">Actions</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {form.watch('services').map((service: OfferService, index: number) => (
+                        <TableRow key={index} className="bg-white dark:bg-gray-800">
+                          <TableCell>
+                            <FormField
+                              control={form.control}
+                              name={`services.${index}.serviceId`}
+                              render={({ field }) => (
+                                <Select
+                                  value={field.value}
+                                  onValueChange={(value) => {
+                                    field.onChange(value);
+                                    const selectedService = services.find(s => s.id === value);
+                                    if (selectedService) {
+                                      form.setValue(`services.${index}.unitPrice`, selectedService.defaultPrice);
+                                    }
+                                  }}
+                                >
+                                  <FormControl>
+                                    <SelectTrigger className="bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+                                      <SelectValue placeholder="Select service" />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    {services
+                                      .filter(s => 
+                                        !form.getValues('services').some(
+                                          (selectedService, i) => 
+                                            i !== index && selectedService.serviceId === s.id
+                                        )
+                                      )
+                                      .map((service) => (
+                                        <SelectItem key={service.id} value={service.id}>
+                                          {service.name}
+                                        </SelectItem>
+                                      ))
+                                    }
+                                  </SelectContent>
+                                </Select>
+                              )}
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <FormField
+                              control={form.control}
+                              name={`services.${index}.quantity`}
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormControl>
+                                    <Input
+                                      type="number"
+                                      min="1"
+                                      {...field}
+                                      onChange={e => {
+                                        field.onChange(parseInt(e.target.value))
+                                        form.trigger('services')
+                                      }}
+                                      className="bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                                    />
+                                  </FormControl>
+                                </FormItem>
+                              )}
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <FormField
+                              control={form.control}
+                              name={`services.${index}.unitPrice`}
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormControl>
+                                    <Input
+                                      type="number"
+                                      step="0.01"
+                                      min="0"
+                                      {...field}
+                                      onChange={e => {
+                                        field.onChange(parseFloat(e.target.value))
+                                        form.trigger('services')
+                                      }}
+                                      className="bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                                    />
+                                  </FormControl>
+                                </FormItem>
+                              )}
+                            />
+                          </TableCell>
+                          <TableCell className="text-gray-900 dark:text-gray-100">
+                            {services.find(s => s.id === service.serviceId)?.priceType || '-'}
+                          </TableCell>
+                          <TableCell>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => removeService(index)}
+                              className="text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100"
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
               </div>
-            </div>
 
-            <div className="grid grid-cols-2 gap-6">
-              <FormField
-                control={form.control}
-                name="taxPercentage"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-gray-700 dark:text-gray-300">Tax Percentage</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        {...field}
-                        onChange={e => {
-                          field.onChange(parseFloat(e.target.value))
-                          form.trigger('taxPercentage')
-                        }}
-                        className="bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
+              <div className="grid grid-cols-2 gap-6">
+                <FormField
+                  control={form.control}
+                  name="taxPercentage"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-gray-700 dark:text-gray-300">Tax Percentage</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          {...field}
+                          onChange={e => {
+                            field.onChange(parseFloat(e.target.value))
+                            form.trigger('taxPercentage')
+                          }}
+                          className="bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
 
-              <FormField
-                control={form.control}
-                name="discountPercentage"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-gray-700 dark:text-gray-300">Discount Percentage</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        {...field}
-                        value={field.value ?? ''}
-                        onChange={(e) => {
-                          const value = e.target.value === '' ? null : parseFloat(e.target.value);
-                          field.onChange(value);
-                          form.trigger('discountPercentage');
-                        }}
-                        className="bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <div className="space-y-2 text-right text-gray-900 dark:text-gray-100">
-              <div className="text-sm">
-                Subtotal: {new Intl.NumberFormat('de-DE', {
-                  style: 'currency',
-                  currency: 'EUR'
-                }).format(totals.subtotal)}
+                <FormField
+                  control={form.control}
+                  name="discountPercentage"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-gray-700 dark:text-gray-300">Discount Percentage</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          {...field}
+                          value={field.value ?? ''}
+                          onChange={(e) => {
+                            const value = e.target.value === '' ? null : parseFloat(e.target.value);
+                            field.onChange(value);
+                            form.trigger('discountPercentage');
+                          }}
+                          className="bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
               </div>
-              {totals.discount > 0 && (
+
+              <div className="space-y-2 text-right text-gray-900 dark:text-gray-100">
                 <div className="text-sm">
-                  Discount: {new Intl.NumberFormat('de-DE', {
+                  Subtotal: {new Intl.NumberFormat('de-DE', {
                     style: 'currency',
                     currency: 'EUR'
-                  }).format(totals.discount)}
+                  }).format(totals.subtotal)}
                 </div>
-              )}
-              <div className="text-sm">
-                Tax: {new Intl.NumberFormat('de-DE', {
-                  style: 'currency',
-                  currency: 'EUR'
-                }).format(totals.tax)}
+                {totals.discount > 0 && (
+                  <div className="text-sm">
+                    Discount: {new Intl.NumberFormat('de-DE', {
+                      style: 'currency',
+                      currency: 'EUR'
+                    }).format(totals.discount)}
+                  </div>
+                )}
+                <div className="text-sm">
+                  Tax: {new Intl.NumberFormat('de-DE', {
+                    style: 'currency',
+                    currency: 'EUR'
+                  }).format(totals.tax)}
+                </div>
+                <div className="text-lg font-bold">
+                  Total: {new Intl.NumberFormat('de-DE', {
+                    style: 'currency',
+                    currency: 'EUR'
+                  }).format(totals.total)}
+                </div>
               </div>
-              <div className="text-lg font-bold">
-                Total: {new Intl.NumberFormat('de-DE', {
-                  style: 'currency',
-                  currency: 'EUR'
-                }).format(totals.total)}
-              </div>
-            </div>
 
-            <div className="flex justify-between items-center">
-              <div className="space-x-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handleGeneratePDF}
-                  disabled={pdfLoading}
-                  className="bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                >
-                  {pdfLoading ? (
-                    <>
-                      <span className="animate-spin mr-2">⏳</span>
-                      Generating...
-                    </>
-                  ) : (
-                    <>
-                      <FileDown className="mr-2 h-4 w-4" />
-                      Generate PDF
-                    </>
-                  )}
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handleGenerateInvoice}
-                  className="bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                >
-                  <FileText className="mr-2 h-4 w-4" />
-                  Generate Invoice
-                </Button>
+              <div className="flex justify-between items-center">
+                <div className="space-x-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleGeneratePDF}
+                    disabled={pdfLoading}
+                    className="bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                  >
+                    {pdfLoading ? (
+                      <>
+                        <span className="animate-spin mr-2">⏳</span>
+                        Generating...
+                      </>
+                    ) : (
+                      <>
+                        <FileDown className="mr-2 h-4 w-4" />
+                        Generate PDF
+                      </>
+                    )}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleGenerateInvoice}
+                    className="bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                  >
+                    <FileText className="mr-2 h-4 w-4" />
+                    Generate Invoice
+                  </Button>
+                </div>
+                <div className="space-x-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={onClose}
+                    className="bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                  >
+                    Cancel
+                  </Button>
+                  <Button 
+                    type="submit" 
+                    disabled={loading}
+                    className="bg-blue-600 hover:bg-blue-700 text-white"
+                  >
+                    {loading ? 'Saving...' : 'Save Offer'}
+                  </Button>
+                </div>
               </div>
-              <div className="space-x-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={onClose}
-                  className="bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                >
-                  Cancel
-                </Button>
-                <Button 
-                  type="submit" 
-                  disabled={loading}
-                  className="bg-blue-600 hover:bg-blue-700 text-white"
-                >
-                  {loading ? 'Saving...' : 'Save Offer'}
-                </Button>
-              </div>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isInvoiceDialogOpen} onOpenChange={setIsInvoiceDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Generate Invoice</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="dueDate">Due Date</Label>
+              <Input
+                id="dueDate"
+                type="date"
+                value={invoiceData.dueDate}
+                onChange={(e) => setInvoiceData({ ...invoiceData, dueDate: e.target.value })}
+              />
             </div>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
+            <div>
+              <Label htmlFor="notes">Notes</Label>
+              <Input
+                id="notes"
+                value={invoiceData.notes}
+                onChange={(e) => setInvoiceData({ ...invoiceData, notes: e.target.value })}
+              />
+            </div>
+            <Button onClick={handleInvoiceSubmit}>Create Invoice</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   )
 }
 
