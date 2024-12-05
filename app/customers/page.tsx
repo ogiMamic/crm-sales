@@ -108,23 +108,21 @@ export default function CustomersPage() {
   }
 
   const handleDeleteCustomer = async (id: string) => {
-    if (window.confirm('Are you sure you want to delete this customer?')) {
-      try {
-        const response = await fetch(`/api/customers/${id}`, {
-          method: 'DELETE',
-        })
-        if (!response.ok) {
-          throw new Error('Failed to delete customer')
-        }
-        fetchCustomers()
-        toast({
-          title: "Customer Deleted",
-          description: "Customer has been successfully removed.",
-        })
-      } catch (error) {
-        console.error('Error deleting customer:', error)
-        setError('Failed to delete customer. Please try again.')
+    try {
+      const response = await fetch(`/api/customers/${id}`, {
+        method: 'DELETE',
+      })
+      if (!response.ok) {
+        throw new Error('Failed to delete customer')
       }
+      fetchCustomers()
+      toast({
+        title: "Customer Deleted",
+        description: "Customer has been successfully removed.",
+      })
+    } catch (error) {
+      console.error('Error deleting customer:', error)
+      setError('Failed to delete customer. Please try again.')
     }
   }
 
@@ -239,13 +237,121 @@ export default function CustomersPage() {
         </Card>
       )}
 
-<Card>
+      <Card>
         <CardHeader>
           <CardTitle>Customer List</CardTitle>
           <CardDescription>Manage and view all your customers here.</CardDescription>
         </CardHeader>
         <CardContent>
-          {/* ... (search i filter kontrole ostaju iste) */}
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center space-x-2">
+              <Input
+                placeholder="Search customers..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="max-w-sm"
+              />
+              <Button variant="outline" size="icon">
+                <Search className="h-4 w-4" />
+              </Button>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Select value={timeFilter} onValueChange={(value: TimeFilter) => setTimeFilter(value)}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Filter by time" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="7days">Last 7 days</SelectItem>
+                  <SelectItem value="30days">Last 30 days</SelectItem>
+                  <SelectItem value="90days">Last 90 days</SelectItem>
+                  <SelectItem value="all">All time</SelectItem>
+                </SelectContent>
+              </Select>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="icon">
+                    <Filter className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuLabel>Toggle columns</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuCheckboxItem
+                    checked={selectedColumns.includes('name')}
+                    onCheckedChange={() => {
+                      setSelectedColumns(prev => 
+                        prev.includes('name') 
+                          ? prev.filter(col => col !== 'name')
+                          : [...prev, 'name']
+                      )
+                    }}
+                  >
+                    Name
+                  </DropdownMenuCheckboxItem>
+                  <DropdownMenuCheckboxItem
+                    checked={selectedColumns.includes('email')}
+                    onCheckedChange={() => {
+                      setSelectedColumns(prev => 
+                        prev.includes('email') 
+                          ? prev.filter(col => col !== 'email')
+                          : [...prev, 'email']
+                      )
+                    }}
+                  >
+                    Email
+                  </DropdownMenuCheckboxItem>
+                  <DropdownMenuCheckboxItem
+                    checked={selectedColumns.includes('phone')}
+                    onCheckedChange={() => {
+                      setSelectedColumns(prev => 
+                        prev.includes('phone') 
+                          ? prev.filter(col => col !== 'phone')
+                          : [...prev, 'phone']
+                      )
+                    }}
+                  >
+                    Phone
+                  </DropdownMenuCheckboxItem>
+                  <DropdownMenuCheckboxItem
+                    checked={selectedColumns.includes('company')}
+                    onCheckedChange={() => {
+                      setSelectedColumns(prev => 
+                        prev.includes('company') 
+                          ? prev.filter(col => col !== 'company')
+                          : [...prev, 'company']
+                      )
+                    }}
+                  >
+                    Company
+                  </DropdownMenuCheckboxItem>
+                  <DropdownMenuCheckboxItem
+                    checked={selectedColumns.includes('address')}
+                    onCheckedChange={() => {
+                      setSelectedColumns(prev => 
+                        prev.includes('address') 
+                          ? prev.filter(col => col !== 'address')
+                          : [...prev, 'address']
+                      )
+                    }}
+                  >
+                    Address
+                  </DropdownMenuCheckboxItem>
+                  <DropdownMenuCheckboxItem
+                    checked={selectedColumns.includes('createdAt')}
+                    onCheckedChange={() => {
+                      setSelectedColumns(prev => 
+                        prev.includes('createdAt') 
+                          ? prev.filter(col => col !== 'createdAt')
+                          : [...prev, 'createdAt']
+                      )
+                    }}
+                  >
+                    Created At
+                  </DropdownMenuCheckboxItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </div>
           {isLoading ? (
             <div className="flex justify-center items-center h-64">
               <Loader2 className="h-8 w-8 animate-spin" />
@@ -355,10 +461,6 @@ export default function CustomersPage() {
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                               <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                              <DropdownMenuItem onClick={() => handleEditClick(customer)}>
-                                Edit
-                              </DropdownMenuItem>
-                              <DropdownMenuSeparator />
                               <DropdownMenuItem onClick={() => handleDeleteCustomer(customer.id)}>
                                 Delete
                               </DropdownMenuItem>
@@ -374,6 +476,8 @@ export default function CustomersPage() {
           )}
         </CardContent>
       </Card>
+      
     </div>
   )
 }
+

@@ -29,26 +29,11 @@ import {
   DropdownMenuCheckboxItem,
 } from "@/components/ui/dropdown-menu"
 import { PlusCircle, Search, MoreHorizontal, Loader2, Filter, Check, X } from 'lucide-react'
-import { CreateCustomerForm } from '@/components/CreateCustomerForm'
-import { EditCustomerForm } from '@/components/EditCustomerForm'
+import { CreateServiceForm } from '@/components/CreateServiceForm'
 import { useUser, SignIn } from "@clerk/nextjs"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Checkbox } from "@/components/ui/checkbox"
-import { toast, useToast } from "@/hooks/use-toast"
-import { CreateServiceForm } from '@/components/CreateServiceForm'
-
-type Customer = {
-  id: string
-  name: string
-  email: string
-  phone: string
-  address: string
-  company: string
-  createdAt: string
-  updatedAt: string
-  userId: string
-}
+import { toast } from "@/hooks/use-toast"
 
 type Service = {
   id: string
@@ -87,13 +72,13 @@ export default function ServicesPage() {
       setError(null)
       const response = await fetch('/api/dienstleistungen')
       if (!response.ok) {
-        throw new Error('Failed to fetch customers')
+        throw new Error('Failed to fetch services')
       }
       const data = await response.json()
       setServices(data)
     } catch (error) {
-      console.error('Error fetching customers:', error)
-      setError('Failed to fetch customers. Please try again later.')
+      console.error('Error fetching services:', error)
+      setError('Failed to fetch services. Please try again later.')
     } finally {
       setIsLoading(false)
     }
@@ -108,7 +93,7 @@ export default function ServicesPage() {
     })
   }
 
-  const handleCustomerUpdated = () => {
+  const handleServiceUpdated = () => {
     fetchServices()
     setIsEditDialogOpen(false)
     toast({
@@ -117,24 +102,22 @@ export default function ServicesPage() {
     })
   }
 
-  const handleDeleteCustomer = async (id: string) => {
-    if (window.confirm('Are you sure you want to delete this service?')) {
-      try {
-        const response = await fetch(`/api/dienstleistungen/${id}`, {
-          method: 'DELETE',
-        })
-        if (!response.ok) {
-          throw new Error('Failed to delete service')
-        }
-        fetchServices()
-        toast({
-          title: "Service Deleted",
-          description: "Service has been successfully removed.",
-        })
-      } catch (error) {
-        console.error('Error deleting service:', error)
-        setError('Failed to delete service. Please try again.')
+  const handleDeleteService = async (id: string) => {
+    try {
+      const response = await fetch(`/api/dienstleistungen/${id}`, {
+        method: 'DELETE',
+      })
+      if (!response.ok) {
+        throw new Error('Failed to delete service')
       }
+      fetchServices()
+      toast({
+        title: "Service Deleted",
+        description: "Service has been successfully removed.",
+      })
+    } catch (error) {
+      console.error('Error deleting service:', error)
+      setError('Failed to delete service. Please try again.')
     }
   }
 
@@ -207,7 +190,7 @@ export default function ServicesPage() {
         <Card>
           <CardHeader>
             <CardTitle>Sign In</CardTitle>
-            <CardDescription>Please sign in to access the customer management system.</CardDescription>
+            <CardDescription>Please sign in to access the service management system.</CardDescription>
           </CardHeader>
           <CardContent>
             <SignIn />
@@ -220,7 +203,7 @@ export default function ServicesPage() {
   return (
     <div className="container mx-auto py-10 space-y-8">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold text-gray-600">Customers</h1>
+        <h1 className="text-3xl font-bold text-gray-600">Services</h1>
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
           <DialogTrigger asChild>
             <Button>
@@ -254,7 +237,103 @@ export default function ServicesPage() {
           <CardDescription>Manage and view all your services here.</CardDescription>
         </CardHeader>
         <CardContent>
-          {/* ... (search i filter kontrole ostaju iste) */}
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center space-x-2">
+              <Input
+                placeholder="Search services..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="max-w-sm"
+              />
+              <Button variant="outline" size="icon">
+                <Search className="h-4 w-4" />
+              </Button>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Select value={timeFilter} onValueChange={(value: TimeFilter) => setTimeFilter(value)}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Filter by time" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="7days">Last 7 days</SelectItem>
+                  <SelectItem value="30days">Last 30 days</SelectItem>
+                  <SelectItem value="90days">Last 90 days</SelectItem>
+                  <SelectItem value="all">All time</SelectItem>
+                </SelectContent>
+              </Select>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="icon">
+                    <Filter className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuLabel>Toggle columns</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuCheckboxItem
+                    checked={selectedColumns.includes('name')}
+                    onCheckedChange={() => {
+                      setSelectedColumns(prev => 
+                        prev.includes('name') 
+                          ? prev.filter(col => col !== 'name')
+                          : [...prev, 'name']
+                      )
+                    }}
+                  >
+                    Name
+                  </DropdownMenuCheckboxItem>
+                  <DropdownMenuCheckboxItem
+                    checked={selectedColumns.includes('description')}
+                    onCheckedChange={() => {
+                      setSelectedColumns(prev => 
+                        prev.includes('description') 
+                          ? prev.filter(col => col !== 'description')
+                          : [...prev, 'description']
+                      )
+                    }}
+                  >
+                    Description
+                  </DropdownMenuCheckboxItem>
+                  <DropdownMenuCheckboxItem
+                    checked={selectedColumns.includes('defaultPrice')}
+                    onCheckedChange={() => {
+                      setSelectedColumns(prev => 
+                        prev.includes('defaultPrice') 
+                          ? prev.filter(col => col !== 'defaultPrice')
+                          : [...prev, 'defaultPrice']
+                      )
+                    }}
+                  >
+                    Default Price
+                  </DropdownMenuCheckboxItem>
+                  <DropdownMenuCheckboxItem
+                    checked={selectedColumns.includes('priceType')}
+                    onCheckedChange={() => {
+                      setSelectedColumns(prev => 
+                        prev.includes('priceType') 
+                          ? prev.filter(col => col !== 'priceType')
+                          : [...prev, 'priceType']
+                      )
+                    }}
+                  >
+                    Price Type
+                  </DropdownMenuCheckboxItem>
+                  <DropdownMenuCheckboxItem
+                    checked={selectedColumns.includes('createdAt')}
+                    onCheckedChange={() => {
+                      setSelectedColumns(prev => 
+                        prev.includes('createdAt') 
+                          ? prev.filter(col => col !== 'createdAt')
+                          : [...prev, 'createdAt']
+                      )
+                    }}
+                  >
+                    Created At
+                  </DropdownMenuCheckboxItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </div>
           {isLoading ? (
             <div className="flex justify-center items-center h-64">
               <Loader2 className="h-8 w-8 animate-spin" />
@@ -340,7 +419,6 @@ export default function ServicesPage() {
                           )}
                         </TableCell>
                       )}
-
                       {selectedColumns.includes('createdAt') && (
                         <TableCell>{new Date(service.createdAt).toLocaleDateString()}</TableCell>
                       )}
@@ -367,8 +445,7 @@ export default function ServicesPage() {
                               <DropdownMenuItem onClick={() => handleEditClick(service)}>
                                 Edit
                               </DropdownMenuItem>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem onClick={() => handleDeleteCustomer(service.id)}>
+                              <DropdownMenuItem onClick={() => handleDeleteService(service.id)}>
                                 Delete
                               </DropdownMenuItem>
                             </DropdownMenuContent>
@@ -386,3 +463,4 @@ export default function ServicesPage() {
     </div>
   )
 }
+
