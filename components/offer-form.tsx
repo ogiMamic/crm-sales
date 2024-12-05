@@ -337,11 +337,19 @@ export function OfferForm({ customers, services, initialData, onClose, onOfferCr
                                   </SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
-                                  {services.map((service) => (
-                                    <SelectItem key={service.id} value={service.id}>
-                                      {service.name}
-                                    </SelectItem>
-                                  ))}
+                                  {services
+                                    .filter(s => 
+                                      !form.getValues('services').some(
+                                        (selectedService, i) => 
+                                          i !== index && selectedService.serviceId === s.id
+                                      )
+                                    )
+                                    .map((service) => (
+                                      <SelectItem key={service.id} value={service.id}>
+                                        {service.name}
+                                      </SelectItem>
+                                    ))
+                                  }
                                 </SelectContent>
                               </Select>
                             )}
@@ -452,7 +460,6 @@ export function OfferForm({ customers, services, initialData, onClose, onOfferCr
                         value={field.value ?? ''}
                         onChange={(e) => {
                           const value = e.target.value === '' ? null : parseFloat(e.target.value);
-                          field.onChange(value);
                           field.onChange(value);
                           form.trigger('discountPercentage');
                         }}
