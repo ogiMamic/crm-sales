@@ -3,19 +3,10 @@ import { PrismaClient } from '@prisma/client'
 
 const prisma = new PrismaClient()
 
-// GET /api/invoices - Get all invoices
-export async function GET(request: Request) {
+// GET /api/invoices - Fetch all invoices
+export async function GET() {
   try {
-    const { searchParams } = new URL(request.url)
-    const status = searchParams.get('status')
-
-    let whereClause = {}
-    if (status) {
-      whereClause = { status }
-    }
-
     const invoices = await prisma.invoice.findMany({
-      where: whereClause,
       include: {
         offer: {
           include: {
@@ -27,11 +18,15 @@ export async function GET(request: Request) {
             }
           }
         }
+      },
+      orderBy: {
+        createdAt: 'desc'
       }
     })
-    
+
     return NextResponse.json(invoices)
   } catch (error) {
+    console.error('Failed to fetch invoices:', error)
     return NextResponse.json(
       { error: 'Failed to fetch invoices' },
       { status: 500 }
@@ -45,58 +40,71 @@ export async function POST(request: Request) {
     const body = await request.json()
     const { offerId, dueDate, notes } = body
 
-    // Get the offer to calculate amounts
-    const offer = await prisma.offer.findUnique({
-      where: { id: offerId },
-      include: {
-        offerServices: true
+    // Use a transaction to ensure data consistency
+    const invoice = await prisma.$transaction(async (tx) => {
+      // Get the offer to calculate amounts
+      const offer = await tx.offer.findUnique({
+        where: { id: offerId },
+        include: {
+          offerServices: {
+            include: {
+              service: true
+            }
+          }
+        }
+      })
+
+      if (!offer) {
+        throw new Error('Offer not found')
       }
-    })
 
-    if (!offer) {
-      return NextResponse.json(
-        { error: 'Offer not found' },
-        { status: 404 }
-      )
-    }
+      // Check if invoice already exists for this offer
+      const existingInvoice = await tx.invoice.findUnique({
+        where: { offerId: offerId }
+      })
 
-    // Check if invoice already exists for this offer
-    const existingInvoice = await prisma.invoice.findUnique({
-      where: { offerId: offerId }
-    })
-
-    if (existingInvoice) {
-      return NextResponse.json(
-        { error: 'Invoice already exists for this offer' },
-        { status: 400 }
-      )
-    }
-
-    // Generate invoice number (you can customize this)
-    const invoiceCount = await prisma.invoice.count()
-    const invoiceNumber = `INV-${(invoiceCount + 1).toString().padStart(5, '0')}`
-
-    // Create invoice
-    const invoice = await prisma.invoice.create({
-      data: {
-        number: invoiceNumber,
-        offerId: offer.id,
-        status: 'PENDING',
-        issueDate: new Date(),
-        dueDate: new Date(dueDate),
-        subtotalAmount: offer.subtotalAmount,
-        taxPercentage: offer.taxPercentage,
-        taxAmount: offer.taxAmount,
-        discountAmount: offer.discountAmount,
-        totalAmount: offer.totalAmount,
-        notes: notes
+      if (existingInvoice) {
+        throw new Error('Invoice already exists for this offer')
       }
+
+      // Generate invoice number (you can customize this)
+      const invoiceCount = await tx.invoice.count()
+      const invoiceNumber = `INV-${(invoiceCount + 1).toString().padStart(5, '0')}`
+
+      // Create invoice
+      return await tx.invoice.create({
+        data: {
+          number: invoiceNumber,
+          offerId: offer.id,
+          status: 'PENDING',
+          issueDate: new Date(),
+          dueDate: new Date(dueDate),
+          subtotalAmount: offer.subtotalAmount,
+          taxPercentage: offer.taxPercentage,
+          taxAmount: offer.taxAmount,
+          discountAmount: offer.discountAmount,
+          totalAmount: offer.totalAmount,
+          notes: notes
+        },
+        include: {
+          offer: {
+            include: {
+              offerServices: {
+                include: {
+                  service: true
+                }
+              }
+            }
+          }
+        }
+      })
     })
 
     return NextResponse.json(invoice)
   } catch (error) {
+    console.error('Failed to create invoice:', error)
     return NextResponse.json(
-      { error: 'Failed to create invoice' },
+      { error: error instanceof Error ? error.message : 'Failed to create invoice' },
       { status: 500 }
     )
   }
