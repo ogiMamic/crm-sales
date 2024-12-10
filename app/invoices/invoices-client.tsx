@@ -20,6 +20,14 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Filter } from 'lucide-react'
 import { InvoiceDetailsDialog } from './invoice-details-dialog'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 
 export type Invoice = {
   id: string
@@ -77,7 +85,10 @@ export default function InvoicesClient({ initialInvoices }: InvoicesClientProps)
     actions: true
   })
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null)
-  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [statusFilter, setStatusFilter] = useState<string>('all')
+  const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false)
+  const [confirmAction, setConfirmAction] = useState<() => void>(() => {})
+  const [confirmMessage, setConfirmMessage] = useState("")
 
   useEffect(() => {
     async function fetchInvoices() {
@@ -110,13 +121,13 @@ export default function InvoicesClient({ initialInvoices }: InvoicesClientProps)
         timeFilter === 'all' ? true :
         timeFilter === '7days' ? daysDifference <= 7 :
         timeFilter === '30days' ? daysDifference <= 30 :
-        timeFilter === '90days' ? daysDifference <= 90 : true;
+        timeFilter === '90days' ? daysDifference <= 90 : true
 
       const matchesStatusFilter = 
         statusFilter === 'all' ? true :
-        invoice.status === statusFilter;
+        invoice.status === statusFilter
 
-      return matchesSearch && matchesTimeFilter && matchesStatusFilter;
+      return matchesSearch && matchesTimeFilter && matchesStatusFilter
     })
   }, [invoices, searchTerm, timeFilter, statusFilter])
 
@@ -128,10 +139,10 @@ export default function InvoicesClient({ initialInvoices }: InvoicesClientProps)
 
   const handlePaymentUpdate = async (id: string, paymentDate: Date) => {
     try {
-      const response = await fetch("/api/invoices/update-payment", {
-        method: "POST",
+      const response = await fetch(`/api/invoices/${id}`, {
+        method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id, paymentDate: paymentDate.toISOString() })
+        body: JSON.stringify({ status: "PAID", paymentDate: paymentDate.toISOString() })
       })
 
       if (response.ok) {
@@ -147,21 +158,24 @@ export default function InvoicesClient({ initialInvoices }: InvoicesClientProps)
   }
 
   const handleDeleteInvoice = async (id: string) => {
-    if (window.confirm('Sind Sie sicher, dass Sie diese Rechnung löschen möchten?')) {
+    setConfirmMessage("Sind Sie sicher, dass Sie diese Rechnung löschen möchten?")
+    setConfirmAction(() => async () => {
       try {
         const response = await fetch(`/api/invoices/${id}`, {
           method: 'DELETE',
-        });
+        })
         if (response.ok) {
-          setInvoices(invoices.filter(inv => inv.id !== id));
+          setInvoices(invoices.filter(inv => inv.id !== id))
         } else {
-          console.error('Fehler beim Löschen der Rechnung');
+          console.error('Fehler beim Löschen der Rechnung')
         }
       } catch (error) {
-        console.error('Fehler beim Löschen der Rechnung:', error);
+        console.error('Fehler beim Löschen der Rechnung:', error)
       }
-    }
-  };
+      setIsConfirmDialogOpen(false)
+    })
+    setIsConfirmDialogOpen(true)
+  }
 
   return (
     <div className="container mx-auto py-6 px-4">
@@ -326,6 +340,18 @@ export default function InvoicesClient({ initialInvoices }: InvoicesClientProps)
           onClose={() => setSelectedInvoice(null)}
         />
       )}
+      <Dialog open={isConfirmDialogOpen} onOpenChange={setIsConfirmDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Bestätigung</DialogTitle>
+            <DialogDescription>{confirmMessage}</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsConfirmDialogOpen(false)}>Abbrechen</Button>
+            <Button onClick={confirmAction}>Bestätigen</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

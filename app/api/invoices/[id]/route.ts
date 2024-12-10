@@ -41,7 +41,7 @@ export async function GET(
   }
 }
 
-// PATCH /api/invoices/[id] - Mark invoice as paid
+// PATCH /api/invoices/[id] - Update invoice status
 export async function PATCH(
   request: Request,
   { params }: { params: { id: string } }
@@ -50,25 +50,46 @@ export async function PATCH(
     const body = await request.json()
     const { status, paymentDate } = body
 
-    if (status !== 'PAID') {
+    if (!['PAID', 'PENDING', 'OVERDUE'].includes(status)) {
       return NextResponse.json(
-        { error: 'Invalid status. Only PAID status is allowed.' },
+        { error: 'Invalid status. Allowed statuses are PAID, PENDING, or OVERDUE.' },
         { status: 400 }
       )
     }
 
+    const updateData: any = { status }
+    if (status === 'PAID') {
+      updateData.paymentDate = new Date(paymentDate)
+    }
+
     const updatedInvoice = await prisma.invoice.update({
       where: { id: params.id },
-      data: {
-        status: status,
-        paymentDate: new Date(paymentDate)
-      }
+      data: updateData
     })
 
     return NextResponse.json(updatedInvoice)
   } catch (error) {
     return NextResponse.json(
       { error: 'Failed to update invoice' },
+      { status: 500 }
+    )
+  }
+}
+
+// DELETE /api/invoices/[id] - Delete an invoice
+export async function DELETE(
+  request: Request,
+  { params }: { params: { id: string } }
+) {
+  try {
+    await prisma.invoice.delete({
+      where: { id: params.id }
+    })
+
+    return NextResponse.json({ message: 'Invoice deleted successfully' })
+  } catch (error) {
+    return NextResponse.json(
+      { error: 'Failed to delete invoice' },
       { status: 500 }
     )
   }
