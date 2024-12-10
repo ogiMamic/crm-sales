@@ -77,6 +77,7 @@ export default function InvoicesClient({ initialInvoices }: InvoicesClientProps)
     actions: true
   })
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null)
+  const [statusFilter, setStatusFilter] = useState<string>('all');
 
   useEffect(() => {
     async function fetchInvoices() {
@@ -105,18 +106,19 @@ export default function InvoicesClient({ initialInvoices }: InvoicesClientProps)
       const now = new Date()
       const daysDifference = (now.getTime() - invoiceDate.getTime()) / (1000 * 3600 * 24)
 
-      switch (timeFilter) {
-        case '7days':
-          return matchesSearch && daysDifference <= 7
-        case '30days':
-          return matchesSearch && daysDifference <= 30
-        case '90days':
-          return matchesSearch && daysDifference <= 90
-        default:
-          return matchesSearch
-      }
+      const matchesTimeFilter = 
+        timeFilter === 'all' ? true :
+        timeFilter === '7days' ? daysDifference <= 7 :
+        timeFilter === '30days' ? daysDifference <= 30 :
+        timeFilter === '90days' ? daysDifference <= 90 : true;
+
+      const matchesStatusFilter = 
+        statusFilter === 'all' ? true :
+        invoice.status === statusFilter;
+
+      return matchesSearch && matchesTimeFilter && matchesStatusFilter;
     })
-  }, [invoices, searchTerm, timeFilter])
+  }, [invoices, searchTerm, timeFilter, statusFilter])
 
   const totalUnpaid = useMemo(() => {
     return invoices
@@ -143,6 +145,23 @@ export default function InvoicesClient({ initialInvoices }: InvoicesClientProps)
       console.error("Error updating invoice payment:", error)
     }
   }
+
+  const handleDeleteInvoice = async (id: string) => {
+    if (window.confirm('Sind Sie sicher, dass Sie diese Rechnung löschen möchten?')) {
+      try {
+        const response = await fetch(`/api/invoices/${id}`, {
+          method: 'DELETE',
+        });
+        if (response.ok) {
+          setInvoices(invoices.filter(inv => inv.id !== id));
+        } else {
+          console.error('Fehler beim Löschen der Rechnung');
+        }
+      } catch (error) {
+        console.error('Fehler beim Löschen der Rechnung:', error);
+      }
+    }
+  };
 
   return (
     <div className="container mx-auto py-6 px-4">
@@ -194,6 +213,17 @@ export default function InvoicesClient({ initialInvoices }: InvoicesClientProps)
               <SelectItem value="30days" className="text-black">Letzte 30 Tage</SelectItem>
               <SelectItem value="90days" className="text-black">Letzte 90 Tage</SelectItem>
               <SelectItem value="all" className="text-black">Alle Zeit</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value)}>
+            <SelectTrigger className="w-[180px] text-black border-gray-300">
+              <SelectValue placeholder="Nach Status filtern" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all" className="text-black">Alle Status</SelectItem>
+              <SelectItem value="PAID" className="text-black">Bezahlt</SelectItem>
+              <SelectItem value="PENDING" className="text-black">Ausstehend</SelectItem>
+              <SelectItem value="OVERDUE" className="text-black">Überfällig</SelectItem>
             </SelectContent>
           </Select>
           <DropdownMenu>
@@ -271,7 +301,6 @@ export default function InvoicesClient({ initialInvoices }: InvoicesClientProps)
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuLabel>Actions</DropdownMenuLabel>
                       <DropdownMenuItem onClick={() => setSelectedInvoice(invoice)}>
                         Details
                       </DropdownMenuItem>
@@ -280,6 +309,9 @@ export default function InvoicesClient({ initialInvoices }: InvoicesClientProps)
                           Bezahlen
                         </DropdownMenuItem>
                       )}
+                      <DropdownMenuItem onClick={() => handleDeleteInvoice(invoice.id)}>
+                        Löschen
+                      </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </TableCell>

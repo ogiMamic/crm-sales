@@ -16,6 +16,7 @@ import {
 import { Invoice } from './invoices-client'
 import { Button } from "@/components/ui/button"
 import { useState } from 'react'
+import { FileDown } from 'lucide-react';
 
 interface InvoiceDetailsDialogProps {
   invoice: Invoice
@@ -24,9 +25,11 @@ interface InvoiceDetailsDialogProps {
 
 export function InvoiceDetailsDialog({ invoice, onClose }: InvoiceDetailsDialogProps) {
   const [error, setError] = useState<string | null>(null);
+  const [pdfLoading, setPdfLoading] = useState(false);
 
   const handleGeneratePDF = async () => {
     try {
+      setPdfLoading(true);
       const response = await fetch(`/api/invoices/${invoice.id}/pdf`, {
         method: 'GET',
       });
@@ -47,6 +50,8 @@ export function InvoiceDetailsDialog({ invoice, onClose }: InvoiceDetailsDialogP
       setError(null);
     } catch (err) {
       setError('Fehler beim Generieren der PDF. Bitte versuchen Sie es später erneut.');
+    } finally {
+      setPdfLoading(false);
     }
   };
 
@@ -113,7 +118,19 @@ export function InvoiceDetailsDialog({ invoice, onClose }: InvoiceDetailsDialogP
           </div>
         )}
         <div className="mt-6">
-          <Button onClick={handleGeneratePDF}>PDF generieren</Button>
+          <Button onClick={handleGeneratePDF} disabled={pdfLoading}>
+            {pdfLoading ? (
+              <>
+                <span className="animate-spin mr-2">⏳</span>
+                Generiere...
+              </>
+            ) : (
+              <>
+                <FileDown className="mr-2 h-4 w-4" />
+                PDF generieren
+              </>
+            )}
+          </Button>
         </div>
         {error && <p className="mt-4 text-red-600">{error}</p>}
       </DialogContent>
