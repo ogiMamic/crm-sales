@@ -9,14 +9,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { EuroIcon, MoreHorizontal } from 'lucide-react'
 import { DatePicker } from "@/components/ui/date-picker"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuCheckboxItem, 
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuCheckboxItem,
   DropdownMenuItem,
-  DropdownMenuLabel, 
-  DropdownMenuSeparator, 
-  DropdownMenuTrigger 
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu"
 import { Filter } from 'lucide-react'
 import { InvoiceDetailsDialog } from './invoice-details-dialog'
@@ -87,7 +87,7 @@ export default function InvoicesClient({ initialInvoices }: InvoicesClientProps)
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null)
   const [statusFilter, setStatusFilter] = useState<string>('all')
   const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false)
-  const [confirmAction, setConfirmAction] = useState<() => void>(() => {})
+  const [confirmAction, setConfirmAction] = useState<() => void>(() => { })
   const [confirmMessage, setConfirmMessage] = useState("")
 
   useEffect(() => {
@@ -109,7 +109,7 @@ export default function InvoicesClient({ initialInvoices }: InvoicesClientProps)
 
   const filteredInvoices = useMemo(() => {
     return invoices.filter(invoice => {
-      const matchesSearch = 
+      const matchesSearch =
         invoice.number.toLowerCase().includes(searchTerm.toLowerCase()) ||
         invoice.offer.customer.name.toLowerCase().includes(searchTerm.toLowerCase())
 
@@ -117,15 +117,15 @@ export default function InvoicesClient({ initialInvoices }: InvoicesClientProps)
       const now = new Date()
       const daysDifference = (now.getTime() - invoiceDate.getTime()) / (1000 * 3600 * 24)
 
-      const matchesTimeFilter = 
+      const matchesTimeFilter =
         timeFilter === 'all' ? true :
-        timeFilter === '7days' ? daysDifference <= 7 :
-        timeFilter === '30days' ? daysDifference <= 30 :
-        timeFilter === '90days' ? daysDifference <= 90 : true
+          timeFilter === '7days' ? daysDifference <= 7 :
+            timeFilter === '30days' ? daysDifference <= 30 :
+              timeFilter === '90days' ? daysDifference <= 90 : true
 
-      const matchesStatusFilter = 
+      const matchesStatusFilter =
         statusFilter === 'all' ? true :
-        invoice.status === statusFilter
+          invoice.status === statusFilter
 
       return matchesSearch && matchesTimeFilter && matchesStatusFilter
     })
@@ -146,7 +146,7 @@ export default function InvoicesClient({ initialInvoices }: InvoicesClientProps)
       })
 
       if (response.ok) {
-        setInvoices(invoices.map(inv => 
+        setInvoices(invoices.map(inv =>
           inv.id === id ? { ...inv, status: "PAID", paymentDate: paymentDate } : inv
         ))
       } else {
@@ -253,7 +253,7 @@ export default function InvoicesClient({ initialInvoices }: InvoicesClientProps)
                 <DropdownMenuCheckboxItem
                   key={key}
                   checked={value}
-                  onCheckedChange={(checked) => 
+                  onCheckedChange={(checked) =>
                     setVisibleColumns(prev => ({ ...prev, [key]: checked }))
                   }
                   className="text-black"
@@ -294,14 +294,13 @@ export default function InvoicesClient({ initialInvoices }: InvoicesClientProps)
               {visibleColumns.dueDate && <TableCell className="text-black">{new Date(invoice.dueDate).toLocaleDateString()}</TableCell>}
               {visibleColumns.status && (
                 <TableCell>
-                  <span className={`px-2 py-1 rounded-full text-sm ${
-                    invoice.status === "PAID" ? "bg-green-100 text-green-800" :
-                    invoice.status === "PENDING" ? "bg-yellow-100 text-yellow-800" :
-                    "bg-red-100 text-red-800"
-                  }`}>
+                  <span className={`px-2 py-1 rounded-full text-sm ${invoice.status === "PAID" ? "bg-green-100 text-green-800" :
+                      invoice.status === "PENDING" ? "bg-yellow-100 text-yellow-800" :
+                        "bg-red-100 text-red-800"
+                    }`}>
                     {invoice.status === "PAID" ? "BEZAHLT" :
-                     invoice.status === "PENDING" ? "AUSSTEHEND" :
-                     "ÜBERFÄLLIG"}
+                      invoice.status === "PENDING" ? "AUSSTEHEND" :
+                        "ÜBERFÄLLIG"}
                   </span>
                 </TableCell>
               )}
@@ -341,14 +340,18 @@ export default function InvoicesClient({ initialInvoices }: InvoicesClientProps)
         />
       )}
       <Dialog open={isConfirmDialogOpen} onOpenChange={setIsConfirmDialogOpen}>
-        <DialogContent>
+        <DialogContent className="bg-white">
           <DialogHeader>
-            <DialogTitle>Bestätigung</DialogTitle>
-            <DialogDescription>{confirmMessage}</DialogDescription>
+            <DialogTitle className="text-gray-900">Bestätigung</DialogTitle>
+            <DialogDescription className="text-gray-700">{confirmMessage}</DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsConfirmDialogOpen(false)}>Abbrechen</Button>
-            <Button onClick={confirmAction}>Bestätigen</Button>
+            <Button variant="outline" onClick={() => setIsConfirmDialogOpen(false)} className="text-gray-700 border-gray-300 hover:bg-gray-100">
+              Abbrechen
+            </Button>
+            <Button onClick={confirmAction} className="bg-blue-600 text-white hover:bg-blue-700">
+              Bestätigen
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
