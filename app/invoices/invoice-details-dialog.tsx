@@ -86,23 +86,23 @@ export function InvoiceDetailsDialog({ invoice, onClose }: InvoiceDetailsDialogP
         <div className="mt-4">
           <h3 className="text-lg font-semibold text-black mb-2">Rechnungszusammenfassung</h3>
           <div className="space-y-2">
-            <div className="flex">
+            <div className="flex justify-between">
               <span className="text-gray-800">Zwischensumme:</span>
-              <span className="text-gray-800">{invoice.subtotalAmount.toFixed(2)} €</span>
+              <span className="text-gray-800 ml-4">{invoice.subtotalAmount.toFixed(2)} €</span>
             </div>
-            <div className="flex">
+            <div className="flex justify-between">
               <span className="text-gray-800">Mehrwertsteuer ({invoice.taxPercentage}%):</span>
-              <span className="text-gray-800">{invoice.taxAmount.toFixed(2)} €</span>
+              <span className="text-gray-800 ml-4">{invoice.taxAmount.toFixed(2)} €</span>
             </div>
             {invoice.discountAmount !== null && invoice.discountAmount > 0 && (
-              <div className="flex">
+              <div className="flex justify-between">
                 <span className="text-gray-800">Rabatt:</span>
-                <span className="text-gray-800">{invoice.discountAmount.toFixed(2)} €</span>
+                <span className="text-gray-800 ml-4">{invoice.discountAmount.toFixed(2)} €</span>
               </div>
             )}
-            <div className="flex">
+            <div className="flex justify-between pt-2 border-t border-gray-200">
               <span className="font-bold text-black">Gesamtbetrag:</span>
-              <span className="font-bold text-black">{invoice.totalAmount.toFixed(2)} €</span>
+              <span className="font-bold text-black ml-4">{invoice.totalAmount.toFixed(2)} €</span>
             </div>
           </div>
         </div>
