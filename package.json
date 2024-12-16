@@ -51,7 +51,7 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
-    "@types/node": "^20",
+    "@types/node": "^20.17.10",
     "@types/pdfkit": "^0.13.5",
     "@types/react": "^18",
     "@types/react-beautiful-dnd": "^13.1.8",
@@ -62,6 +62,10 @@
     "prisma": "^6.0.0",
     "supabase": "^1.200.3",
     "tailwindcss": "^3.4.1",
-    "typescript": "^5"
+    "ts-node": "^10.9.2",
+    "typescript": "^5.7.2"
+  },
+  "prisma": {
+    "seed": "ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seed.ts"
   }
 }
