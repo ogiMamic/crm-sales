@@ -1,3 +1,4 @@
+// components/MessageList.tsx
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 type Conversation = {
@@ -5,6 +6,7 @@ type Conversation = {
   name: string;
   imageUrl?: string;
   email: string;
+  hasNewMessages?: boolean;
 }
 
 type MessageListProps = {
@@ -30,15 +32,17 @@ export function MessageList({ conversations, selectedConversation, onSelectConve
             <AvatarImage src={conversation.imageUrl} alt={conversation.name} />
             <AvatarFallback>{conversation.name.charAt(0)}</AvatarFallback>
           </Avatar>
-          <div>
+          <div className="flex-grow">
             <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
               {conversation.name}
             </span>
             <p className="text-xs text-gray-500 dark:text-gray-400">{conversation.email}</p>
           </div>
+          {conversation.hasNewMessages && (
+            <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+          )}
         </li>
       ))}
     </ul>
   )
 }
-

@@ -1,3 +1,4 @@
+// components/MessageWindow.tsx
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
@@ -7,6 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Send } from 'lucide-react'
 import { UserResource } from '@clerk/types'
 import { fetchMessages, sendMessage } from '@/app/actions/messageActions'
+import { useChannel } from "@ably-labs/react-hooks"
 
 type Message = {
   id: string
@@ -38,6 +40,10 @@ export function MessageWindow({ conversation, currentUser, onMessageSent }: Mess
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
+  useChannel(`conversation:${conversation.id}`, "new-message", (message) => {
+    setMessages(prevMessages => [...prevMessages, message.data]);
+  });
+
   const fetchAndSetMessages = async () => {
     const fetchedMessages = await fetchMessages(currentUser.id, conversation.id)
     setMessages(fetchedMessages)
@@ -47,11 +53,7 @@ export function MessageWindow({ conversation, currentUser, onMessageSent }: Mess
     e.preventDefault()
     if (inputMessage.trim()) {
       try {
-        console.log(conversation.id + " " + currentUser.id +" "+ inputMessage)
-
         const newMessage = await sendMessage(inputMessage, currentUser.id, conversation.id)
-
-        setMessages([...messages, newMessage])
         setInputMessage('')
         onMessageSent()
       } catch (error) {
@@ -109,4 +111,3 @@ export function MessageWindow({ conversation, currentUser, onMessageSent }: Mess
     </div>
   )
 }
-

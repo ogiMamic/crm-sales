@@ -1,3 +1,4 @@
+// app/actions/getConversations.ts
 'use server'
 
 import prisma from "@/lib/prisma";
@@ -30,11 +31,23 @@ export async function getConversations(userId: string) {
     const conversations = await Promise.all(
       Array.from(uniqueConversationPartners).map(async (partnerId) => {
         const user = await clerkClient().users.getUser(partnerId);
+        const lastMessage = await prisma.message.findFirst({
+          where: {
+            OR: [
+              { senderId: userId, receiverId: partnerId },
+              { senderId: partnerId, receiverId: userId }
+            ]
+          },
+          orderBy: {
+            createdAt: 'desc'
+          }
+        });
         return {
           id: partnerId,
           name: `${user.firstName} ${user.lastName}`.trim() || 'Unknown User',
           imageUrl: user.imageUrl || '',
           email: user.emailAddresses[0]?.emailAddress || 'No email provided',
+          hasNewMessages: lastMessage ? lastMessage.senderId !== userId && !lastMessage.read : false,
         };
       })
     );
@@ -45,4 +58,3 @@ export async function getConversations(userId: string) {
     return [];
   }
 }
-

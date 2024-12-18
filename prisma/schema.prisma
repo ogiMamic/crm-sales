@@ -10,6 +10,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// schema.prisma
 model Message {
   id        String   @id @default(uuid())
   content   String
@@ -17,6 +18,7 @@ model Message {
   receiverId String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  read      Boolean  @default(false)
 }
 
 // Existing models remain unchanged

@@ -1,6 +1,8 @@
+// app/actions/messageActions.ts
 'use server'
 
 import prisma from "@/lib/prisma"
+import { ably } from "@/lib/ably"
 
 export async function fetchMessages(currentUserId: string, conversationId: string) {
   try {
@@ -38,6 +40,17 @@ export async function sendMessage(content: string, senderId: string, receiverId:
       }
     })
 
+    const channel = ably.channels.get(`conversation:${receiverId}`);
+    await channel.publish("new-message", {
+      id: newMessage.id,
+      content: newMessage.content,
+      senderId: newMessage.senderId,
+      timestamp: newMessage.createdAt
+    });
+
+    const userChannel = ably.channels.get(`user:${receiverId}`);
+    await userChannel.publish("new-message", { senderId });
+
     return {
       id: newMessage.id,
       content: newMessage.content,
@@ -49,4 +62,3 @@ export async function sendMessage(content: string, senderId: string, receiverId:
     throw error
   }
 }
-

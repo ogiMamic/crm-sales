@@ -1,3 +1,4 @@
+// app/messages/page.tsx
 'use client'
 
 import { useState, useEffect } from 'react'
@@ -10,12 +11,14 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Search, X } from 'lucide-react'
 import { getConversations } from '../actions/getConversations'
 import { getClerkUsers } from '../actions/getClerkUsers'
+import { useChannel } from "@ably-labs/react-hooks"
 
 type Conversation = {
   id: string;
   name: string;
   imageUrl?: string;
   email: string;
+  hasNewMessages?: boolean;
 }
 
 type User = {
@@ -38,6 +41,15 @@ export default function MessagesPage() {
       fetchConversations()
     }
   }, [user])
+
+  useChannel(`user:${user?.id}`, "new-message", (message) => {
+    const { senderId } = message.data;
+    setConversations(prevConversations => 
+      prevConversations.map(conv => 
+        conv.id === senderId ? { ...conv, hasNewMessages: true } : conv
+      )
+    );
+  });
 
   const fetchConversations = async () => {
     if (user) {
@@ -132,7 +144,14 @@ export default function MessagesPage() {
               <MessageList 
                 conversations={conversations} 
                 selectedConversation={selectedConversation} 
-                onSelectConversation={setSelectedConversation} 
+                onSelectConversation={(conv) => {
+                  setSelectedConversation(conv)
+                  setConversations(prevConversations => 
+                    prevConversations.map(c => 
+                      c.id === conv.id ? { ...c, hasNewMessages: false } : c
+                    )
+                  )
+                }} 
               />
             )}
           </div>
@@ -150,4 +169,3 @@ export default function MessagesPage() {
     </div>
   )
 }
-
