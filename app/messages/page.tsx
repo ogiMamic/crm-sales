@@ -1,4 +1,3 @@
-// app/messages/page.tsx
 'use client'
 
 import { useState, useEffect } from 'react'
@@ -12,6 +11,8 @@ import { Search, X } from 'lucide-react'
 import { getConversations } from '../actions/getConversations'
 import { getClerkUsers } from '../actions/getClerkUsers'
 import { useChannel } from "@ably-labs/react-hooks"
+import { ably } from '@/lib/ably'
+import { configureAbly } from '@ably-labs/react-hooks'
 
 type Conversation = {
   id: string;
@@ -41,7 +42,7 @@ export default function MessagesPage() {
       fetchConversations()
     }
   }, [user])
-
+  configureAbly({ key: process.env.ABLY_API_KEY, authUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/api/createTokenRequest`, clientId: "crm-sales"})
   useChannel(`user:${user?.id}`, "new-message", (message) => {
     const { senderId } = message.data;
     setConversations(prevConversations => 
@@ -169,3 +170,4 @@ export default function MessagesPage() {
     </div>
   )
 }
+
