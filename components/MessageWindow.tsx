@@ -20,9 +20,11 @@ type Message = {
 
 type MessageWindowProps = {
   conversation: {
-    id: string
-    name: string
-    imageUrl?: string
+    id: string;
+    name: string;
+    imageUrl?: string;
+    email: string;
+    hasNewMessages?: boolean;
   }
   currentUser: UserResource
   onMessageSent: () => void
@@ -96,16 +98,14 @@ export function MessageWindow({ conversation, currentUser, onMessageSent }: Mess
           messages.map((message) => (
             <div
               key={message.id}
-              className={`flex ${
-                message.senderId === currentUser.id ? 'justify-end' : 'justify-start'
-              }`}
+              className={`flex ${message.senderId === currentUser.id ? 'justify-end' : 'justify-start'
+                }`}
             >
               <div
-                className={`max-w-[70%] rounded-lg p-3 ${
-                  message.senderId === currentUser.id
+                className={`max-w-[70%] rounded-lg p-3 ${message.senderId === currentUser.id
                     ? 'bg-blue-500 text-white'
                     : 'bg-gray-200 text-gray-900 dark:bg-gray-700 dark:text-gray-100'
-                }`}
+                  }`}
               >
                 <p>{message.content}</p>
                 <div className="flex justify-between items-center mt-1">
