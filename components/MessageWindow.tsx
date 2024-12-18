@@ -1,20 +1,21 @@
-// components/MessageWindow.tsx
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Send } from 'lucide-react'
+import { Send, Check, CheckCheck } from 'lucide-react'
 import { UserResource } from '@clerk/types'
-import { fetchMessages, sendMessage } from '@/app/actions/messageActions'
+import { fetchMessages, sendMessage, markMessageAsRead } from '@/app/actions/messageActions'
 import { useChannel } from "@ably-labs/react-hooks"
 
 type Message = {
   id: string
   content: string
   senderId: string
+  receiverId: string
   timestamp: Date
+  read: boolean
 }
 
 type MessageWindowProps = {
@@ -42,11 +43,25 @@ export function MessageWindow({ conversation, currentUser, onMessageSent }: Mess
 
   useChannel(`conversation:${conversation.id}`, "new-message", (message) => {
     setMessages(prevMessages => [...prevMessages, message.data]);
+    if (message.data.receiverId === currentUser.id) {
+      markMessageAsRead(message.data.id);
+    }
   });
 
   const fetchAndSetMessages = async () => {
-    const fetchedMessages = await fetchMessages(currentUser.id, conversation.id)
-    setMessages(fetchedMessages)
+    try {
+      const fetchedMessages = await fetchMessages(currentUser.id, conversation.id)
+      console.log("Fetched messages:", fetchedMessages) // Debug log
+      setMessages(fetchedMessages)
+      // Mark all received messages as read
+      fetchedMessages.forEach(message => {
+        if (message.receiverId === currentUser.id && !message.read) {
+          markMessageAsRead(message.id);
+        }
+      });
+    } catch (error) {
+      console.error("Error fetching messages:", error)
+    }
   }
 
   const handleSendMessage = async (e: React.FormEvent) => {
@@ -54,6 +69,7 @@ export function MessageWindow({ conversation, currentUser, onMessageSent }: Mess
     if (inputMessage.trim()) {
       try {
         const newMessage = await sendMessage(inputMessage, currentUser.id, conversation.id)
+        setMessages(prevMessages => [...prevMessages, newMessage])
         setInputMessage('')
         onMessageSent()
       } catch (error) {
@@ -74,27 +90,38 @@ export function MessageWindow({ conversation, currentUser, onMessageSent }: Mess
         </div>
       </div>
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {messages.map((message) => (
-          <div
-            key={message.id}
-            className={`flex ${
-              message.senderId === currentUser.id ? 'justify-end' : 'justify-start'
-            }`}
-          >
+        {messages.length === 0 ? (
+          <p className="text-center text-gray-500">No messages yet</p>
+        ) : (
+          messages.map((message) => (
             <div
-              className={`max-w-[70%] rounded-lg p-3 ${
-                message.senderId === currentUser.id
-                  ? 'bg-blue-500 text-white'
-                  : 'bg-gray-200 text-gray-900 dark:bg-gray-700 dark:text-gray-100'
+              key={message.id}
+              className={`flex ${
+                message.senderId === currentUser.id ? 'justify-end' : 'justify-start'
               }`}
             >
-              <p>{message.content}</p>
-              <p className="text-xs mt-1 opacity-70">
-                {new Date(message.timestamp).toLocaleTimeString()}
-              </p>
+              <div
+                className={`max-w-[70%] rounded-lg p-3 ${
+                  message.senderId === currentUser.id
+                    ? 'bg-blue-500 text-white'
+                    : 'bg-gray-200 text-gray-900 dark:bg-gray-700 dark:text-gray-100'
+                }`}
+              >
+                <p>{message.content}</p>
+                <div className="flex justify-between items-center mt-1">
+                  <p className="text-xs opacity-70">
+                    {new Date(message.timestamp).toLocaleTimeString()}
+                  </p>
+                  {message.senderId === currentUser.id && (
+                    <span className="text-xs">
+                      {message.read ? <CheckCheck size={16} /> : <Check size={16} />}
+                    </span>
+                  )}
+                </div>
+              </div>
             </div>
-          </div>
-        ))}
+          ))
+        )}
         <div ref={messagesEndRef} />
       </div>
       <form onSubmit={handleSendMessage} className="p-4 border-t border-gray-200 dark:border-gray-700 flex">
@@ -111,3 +138,4 @@ export function MessageWindow({ conversation, currentUser, onMessageSent }: Mess
     </div>
   )
 }
+

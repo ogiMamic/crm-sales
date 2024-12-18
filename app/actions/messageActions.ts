@@ -1,4 +1,3 @@
-// app/actions/messageActions.ts
 'use server'
 
 import prisma from "@/lib/prisma"
@@ -22,11 +21,13 @@ export async function fetchMessages(currentUserId: string, conversationId: strin
       id: msg.id,
       content: msg.content,
       senderId: msg.senderId,
-      timestamp: msg.createdAt
+      receiverId: msg.receiverId,
+      timestamp: msg.createdAt,
+      read: msg.read
     }))
   } catch (error) {
     console.error('Error fetching messages:', error)
-    return []
+    throw error
   }
 }
 
@@ -36,7 +37,8 @@ export async function sendMessage(content: string, senderId: string, receiverId:
       data: {
         content,
         senderId,
-        receiverId
+        receiverId,
+        read: false
       }
     })
 
@@ -45,7 +47,9 @@ export async function sendMessage(content: string, senderId: string, receiverId:
       id: newMessage.id,
       content: newMessage.content,
       senderId: newMessage.senderId,
-      timestamp: newMessage.createdAt
+      receiverId: newMessage.receiverId,
+      timestamp: newMessage.createdAt,
+      read: newMessage.read
     });
 
     const userChannel = ably.channels.get(`user:${receiverId}`);
@@ -55,10 +59,30 @@ export async function sendMessage(content: string, senderId: string, receiverId:
       id: newMessage.id,
       content: newMessage.content,
       senderId: newMessage.senderId,
-      timestamp: newMessage.createdAt
+      receiverId: newMessage.receiverId,
+      timestamp: newMessage.createdAt,
+      read: newMessage.read
     }
   } catch (error) {
     console.error('Error sending message:', error)
     throw error
   }
 }
+
+export async function markMessageAsRead(messageId: string) {
+  try {
+    const updatedMessage = await prisma.message.update({
+      where: { id: messageId },
+      data: { read: true },
+    })
+
+    const channel = ably.channels.get(`conversation:${updatedMessage.senderId}`)
+    await channel.publish('message-read', { messageId: updatedMessage.id })
+
+    return updatedMessage
+  } catch (error) {
+    console.error('Error marking message as read:', error)
+    throw error
+  }
+}
+
