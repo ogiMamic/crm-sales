@@ -42,12 +42,12 @@ export function CreateServiceForm({ onServiceAdded, onCancel }: CreateServiceFor
         setIsSubmitting(true)
         try {
             if (!userId) {
-                throw new Error('User not authenticated')
+                throw new Error('Benutzer nicht authentifiziert')
             }
 
             const token = await getToken()
             if (!token) {
-                throw new Error('Failed to get authentication token')
+                throw new Error('Authentifizierungstoken konnte nicht abgerufen werden')
             }
 
             const response = await fetch('/api/dienstleistungen', {
@@ -61,19 +61,19 @@ export function CreateServiceForm({ onServiceAdded, onCancel }: CreateServiceFor
 
             if (!response.ok) {
                 const errorData = await response.json()
-                throw new Error(errorData.error || 'Failed to add service')
+                throw new Error(errorData.error || 'Dienstleistung konnte nicht hinzugefügt werden')
             }
 
             toast({
-                title: "Success",
-                description: "Service added successfully",
+                title: "Erfolg",
+                description: "Dienstleistung erfolgreich hinzugefügt",
             })
             onServiceAdded()
         } catch (error) {
-            console.error('Error adding service:', error)
+            console.error('Fehler beim Hinzufügen der Dienstleistung:', error)
             toast({
-                title: "Error",
-                description: "Failed to add service. Please try again.",
+                title: "Fehler",
+                description: "Dienstleistung konnte nicht hinzugefügt werden. Bitte versuchen Sie es erneut.",
                 variant: "destructive",
             })
         } finally {
@@ -95,9 +95,8 @@ export function CreateServiceForm({ onServiceAdded, onCancel }: CreateServiceFor
                 />
             </div>
             
-            
             <div className="space-y-2">
-                <Label htmlFor="description" className="text-primary">Description</Label>
+                <Label htmlFor="description" className="text-primary">Beschreibung</Label>
                 <Input
                     id="description"
                     name="description"
@@ -107,7 +106,7 @@ export function CreateServiceForm({ onServiceAdded, onCancel }: CreateServiceFor
                 />
             </div>
             <div className="space-y-2">
-                <Label htmlFor="defaultPrice" className="text-primary">Default Price</Label>
+                <Label htmlFor="defaultPrice" className="text-primary">Standardpreis</Label>
                 <Input
                     id="defaultPrice"
                     name="defaultPrice"
@@ -120,25 +119,26 @@ export function CreateServiceForm({ onServiceAdded, onCancel }: CreateServiceFor
                 />
             </div>
             <div className="space-y-2">
-                <Label htmlFor="priceType" className="text-primary">Price Type</Label>
+                <Label htmlFor="priceType" className="text-primary">Preistyp</Label>
                 <Select value={formData.priceType} onValueChange={(value: 'FIXED' | 'HOURLY') => setFormData(prev => ({ ...prev, priceType: value }))}>
                     <SelectTrigger>
                         <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                        <SelectItem value="FIXED">Fixed</SelectItem>
-                        <SelectItem value="HOURLY">Hourly</SelectItem>
+                        <SelectItem value="FIXED">Fest</SelectItem>
+                        <SelectItem value="HOURLY">Stündlich</SelectItem>
                     </SelectContent>
                 </Select>
             </div>
             <div className="flex justify-end space-x-2">
                 <Button type="button" variant="outline" className="text-primary" onClick={onCancel} disabled={isSubmitting}>
-                    Cancel
+                    Abbrechen
                 </Button>
                 <Button type="submit" disabled={isSubmitting}>
-                    {isSubmitting ? 'Adding...' : 'Add Service'}
+                    {isSubmitting ? 'Hinzufügen...' : 'Dienstleistung hinzufügen'}
                 </Button>
             </div>
         </form>
     )
 }
+

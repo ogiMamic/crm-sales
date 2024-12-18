@@ -127,10 +127,10 @@ export function OfferForm({ customers, services, initialData, onClose, onOfferCr
         router.refresh()
         onClose()
       } else {
-        console.error('Error saving offer:', await response.text())
+        console.error('Fehler beim Speichern des Angebots:', await response.text())
       }
     } catch (error) {
-      console.error('Error saving offer:', error)
+      console.error('Fehler beim Speichern des Angebots:', error)
     } finally {
       setLoading(false)
     }
@@ -185,17 +185,17 @@ export function OfferForm({ customers, services, initialData, onClose, onOfferCr
           document.body.removeChild(link);
           window.URL.revokeObjectURL(url);
         } else {
-          console.error('Failed to generate PDF');
-          alert('Failed to generate PDF. Please try again.');
+          console.error('PDF-Generierung fehlgeschlagen');
+          alert('PDF-Generierung fehlgeschlagen. Bitte versuchen Sie es erneut.');
         }
       } catch (error) {
-        console.error('Error generating PDF:', error);
-        alert('An error occurred while generating the PDF. Please try again.');
+        console.error('Fehler bei der PDF-Generierung:', error);
+        alert('Bei der PDF-Generierung ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut.');
       } finally {
         setPdfLoading(false);
       }
     } else {
-      alert('Cannot generate PDF: Offer ID is not available');
+      alert('PDF kann nicht generiert werden: Angebots-ID ist nicht verfügbar');
     }
   }
 
@@ -219,16 +219,16 @@ export function OfferForm({ customers, services, initialData, onClose, onOfferCr
 
       if (response.ok) {
         const invoice = await response.json()
-        alert('Invoice created successfully!')
+        alert('Rechnung erfolgreich erstellt!')
         setIsInvoiceDialogOpen(false)
         // Optionally, you can update the UI or redirect to the invoice page
       } else {
-        console.error('Error creating invoice:', await response.text())
-        alert('Failed to create invoice. Please try again.')
+        console.error('Fehler beim Erstellen der Rechnung:', await response.text())
+        alert('Fehler beim Erstellen der Rechnung. Bitte versuchen Sie es erneut.')
       }
     } catch (error) {
-      console.error('Error creating invoice:', error)
-      alert('An error occurred while creating the invoice. Please try again.')
+      console.error('Fehler beim Erstellen der Rechnung:', error)
+      alert('Beim Erstellen der Rechnung ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut.')
     }
   }
 
@@ -242,7 +242,7 @@ export function OfferForm({ customers, services, initialData, onClose, onOfferCr
             form.reset(updatedOffer)
           }
         } catch (error) {
-          console.error('Error reloading offer:', error)
+          console.error('Fehler beim Neuladen des Angebots:', error)
         } finally {
           setShouldReloadOffer(false)
         }
@@ -258,7 +258,7 @@ export function OfferForm({ customers, services, initialData, onClose, onOfferCr
         <DialogContent className="max-w-[800px] max-h-[80vh] overflow-y-auto bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100">
           <DialogHeader>
             <DialogTitle className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-              {initialData ? 'Edit Offer' : 'Create New Offer'}
+              {initialData ? 'Angebot bearbeiten' : 'Neues Angebot erstellen'}
             </DialogTitle>
           </DialogHeader>
           <Form {...form}>
@@ -269,14 +269,14 @@ export function OfferForm({ customers, services, initialData, onClose, onOfferCr
                   name="customerId"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-gray-700 dark:text-gray-300">Customer</FormLabel>
+                      <FormLabel className="text-gray-700 dark:text-gray-300">Kunde</FormLabel>
                       <Select
                         value={field.value}
                         onValueChange={field.onChange}
                       >
                         <FormControl>
                           <SelectTrigger className="bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
-                            <SelectValue placeholder="Select customer" />
+                            <SelectValue placeholder="Kunde auswählen" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
@@ -296,7 +296,7 @@ export function OfferForm({ customers, services, initialData, onClose, onOfferCr
                   name="date"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-gray-700 dark:text-gray-300">Date</FormLabel>
+                      <FormLabel className="text-gray-700 dark:text-gray-300">Datum</FormLabel>
                       <Popover>
                         <PopoverTrigger asChild>
                           <FormControl>
@@ -310,7 +310,7 @@ export function OfferForm({ customers, services, initialData, onClose, onOfferCr
                               {field.value ? (
                                 formatDate(field.value)
                               ) : (
-                                <span>Pick a date</span>
+                                <span>Datum auswählen</span>
                               )}
                               <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                             </Button>
@@ -335,10 +335,10 @@ export function OfferForm({ customers, services, initialData, onClose, onOfferCr
 
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Services</h3>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Dienstleistungen</h3>
                   <Button type="button" onClick={addService} variant="outline" className="bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
                     <Plus className="h-4 w-4 mr-2" />
-                    Add Service
+                    Dienstleistung hinzufügen
                   </Button>
                 </div>
 
@@ -346,11 +346,11 @@ export function OfferForm({ customers, services, initialData, onClose, onOfferCr
                   <Table>
                     <TableHeader>
                       <TableRow className="bg-gray-100 dark:bg-gray-700">
-                        <TableHead className="text-gray-900 dark:text-gray-100">Service</TableHead>
-                        <TableHead className="text-gray-900 dark:text-gray-100">Quantity</TableHead>
-                        <TableHead className="text-gray-900 dark:text-gray-100">Unit Price</TableHead>
-                        <TableHead className="text-gray-900 dark:text-gray-100">Price Type</TableHead>
-                        <TableHead className="text-gray-900 dark:text-gray-100">Actions</TableHead>
+                        <TableHead className="text-gray-900 dark:text-gray-100">Dienstleistung</TableHead>
+                        <TableHead className="text-gray-900 dark:text-gray-100">Menge</TableHead>
+                        <TableHead className="text-gray-900 dark:text-gray-100">Einzelpreis</TableHead>
+                        <TableHead className="text-gray-900 dark:text-gray-100">Preistyp</TableHead>
+                        <TableHead className="text-gray-900 dark:text-gray-100">Aktionen</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -373,7 +373,7 @@ export function OfferForm({ customers, services, initialData, onClose, onOfferCr
                                 >
                                   <FormControl>
                                     <SelectTrigger className="bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
-                                      <SelectValue placeholder="Select service" />
+                                      <SelectValue placeholder="Dienstleistung auswählen" />
                                     </SelectTrigger>
                                   </FormControl>
                                   <SelectContent>
@@ -441,7 +441,7 @@ export function OfferForm({ customers, services, initialData, onClose, onOfferCr
                             />
                           </TableCell>
                           <TableCell className="text-gray-900 dark:text-gray-100">
-                            {services.find(s => s.id === service.serviceId)?.priceType || '-'}
+                            {services.find(s => s.id === service.serviceId)?.priceType === 'FIXED' ? 'Fest' : 'Stündlich'}
                           </TableCell>
                           <TableCell>
                             <Button
@@ -467,7 +467,7 @@ export function OfferForm({ customers, services, initialData, onClose, onOfferCr
                   name="taxPercentage"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-gray-700 dark:text-gray-300">Tax Percentage</FormLabel>
+                      <FormLabel className="text-gray-700 dark:text-gray-300">Mehrwertsteuersatz</FormLabel>
                       <FormControl>
                         <Input
                           type="number"
@@ -490,7 +490,7 @@ export function OfferForm({ customers, services, initialData, onClose, onOfferCr
                   name="discountPercentage"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-gray-700 dark:text-gray-300">Discount Percentage</FormLabel>
+                      <FormLabel className="text-gray-700 dark:text-gray-300">Rabatt in Prozent</FormLabel>
                       <FormControl>
                         <Input
                           type="number"
@@ -513,27 +513,27 @@ export function OfferForm({ customers, services, initialData, onClose, onOfferCr
 
               <div className="space-y-2 text-right text-gray-900 dark:text-gray-100">
                 <div className="text-sm">
-                  Subtotal: {new Intl.NumberFormat('de-DE', {
+                  Zwischensumme: {new Intl.NumberFormat('de-DE', {
                     style: 'currency',
                     currency: 'EUR'
                   }).format(totals.subtotal)}
                 </div>
                 {totals.discount > 0 && (
                   <div className="text-sm">
-                    Discount: {new Intl.NumberFormat('de-DE', {
+                    Rabatt: {new Intl.NumberFormat('de-DE', {
                       style: 'currency',
                       currency: 'EUR'
                     }).format(totals.discount)}
                   </div>
                 )}
                 <div className="text-sm">
-                  Tax: {new Intl.NumberFormat('de-DE', {
+                  Mehrwertsteuer: {new Intl.NumberFormat('de-DE', {
                     style: 'currency',
                     currency: 'EUR'
                   }).format(totals.tax)}
                 </div>
                 <div className="text-lg font-bold">
-                  Total: {new Intl.NumberFormat('de-DE', {
+                  Gesamtsumme: {new Intl.NumberFormat('de-DE', {
                     style: 'currency',
                     currency: 'EUR'
                   }).format(totals.total)}
@@ -552,12 +552,12 @@ export function OfferForm({ customers, services, initialData, onClose, onOfferCr
                     {pdfLoading ? (
                       <>
                         <span className="animate-spin mr-2">⏳</span>
-                        Generating...
+                        Generiere...
                       </>
                     ) : (
                       <>
                         <FileDown className="mr-2 h-4 w-4" />
-                        Generate PDF
+                        PDF generieren
                       </>
                     )}
                   </Button>
@@ -569,7 +569,7 @@ export function OfferForm({ customers, services, initialData, onClose, onOfferCr
                       className="bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                     >
                       <FileText className="mr-2 h-4 w-4" />
-                      Generate Invoice
+                      Rechnung erstellen
                     </Button>
                   )}
                 </div>
@@ -580,14 +580,14 @@ export function OfferForm({ customers, services, initialData, onClose, onOfferCr
                     onClick={onClose}
                     className="bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                   >
-                    Cancel
+                    Abbrechen
                   </Button>
                   <Button 
                     type="submit" 
                     disabled={loading}
                     className="bg-blue-600 hover:bg-blue-700 text-white"
                   >
-                    {loading ? 'Saving...' : 'Save Offer'}
+                    {loading ? 'Speichere...' : 'Angebot speichern'}
                   </Button>
                 </div>
               </div>
@@ -599,12 +599,12 @@ export function OfferForm({ customers, services, initialData, onClose, onOfferCr
       <Dialog open={isInvoiceDialogOpen} onOpenChange={setIsInvoiceDialogOpen}>
         <DialogContent className="sm:max-w-[425px] bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 shadow-lg rounded-lg border border-gray-200 dark:border-gray-700">
           <DialogHeader>
-            <DialogTitle className="text-xl font-semibold">Generate Invoice</DialogTitle>
+            <DialogTitle className="text-xl font-semibold">Rechnung erstellen</DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="dueDate" className="text-right text-sm font-medium">
-                Due Date
+                Fälligkeitsdatum
               </Label>
               <Input
                 id="dueDate"
@@ -616,7 +616,7 @@ export function OfferForm({ customers, services, initialData, onClose, onOfferCr
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="notes" className="text-right text-sm font-medium">
-                Notes
+                Notizen
               </Label>
               <Input
                 id="notes"
@@ -628,7 +628,7 @@ export function OfferForm({ customers, services, initialData, onClose, onOfferCr
           </div>
           <DialogFooter>
             <Button onClick={handleInvoiceSubmit} className="bg-blue-600 hover:bg-blue-700 text-white">
-              Create Invoice
+              Rechnung erstellen
             </Button>
           </DialogFooter>
         </DialogContent>

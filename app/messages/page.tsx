@@ -1,60 +1,89 @@
 'use client'
 
-import React, { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useUser } from "@clerk/nextjs"
+import { MessageList } from '@/components/MessageList'
+import { MessageWindow } from '@/components/MessageWindow'
+import { NewMessageDialog } from '@/components/NewMessageDialog'
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
+import { PlusCircle } from 'lucide-react'
+
+// Define the Conversation type
+type Conversation = {
+  id: string;
+  name: string;
+  type: 'individual' | 'group';
+}
 
 export default function MessagesPage() {
-  const [messages, setMessages] = useState([])
-  const [newMessage, setNewMessage] = useState({ recipient: '', subject: '', content: '' })
+  const { user, isLoaded } = useUser()
+  const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null)
+  const [conversations, setConversations] = useState<Conversation[]>([])
+  const [isNewMessageDialogOpen, setIsNewMessageDialogOpen] = useState(false)
 
-  const handleSendMessage = () => {
-    if (newMessage.recipient && newMessage.subject && newMessage.content) {
-      setMessages([...messages, { ...newMessage, id: Date.now(), date: new Date() }])
-      setNewMessage({ recipient: '', subject: '', content: '' })
+  useEffect(() => {
+    if (user) {
+      // Konversationen des Benutzers abrufen
+      fetchConversations()
     }
+  }, [user])
+
+  const fetchConversations = async () => {
+    // TODO: API-Aufruf implementieren, um die Konversationen des Benutzers abzurufen
+    // Vorerst verwenden wir Beispieldaten
+    setConversations([
+      { id: '1', name: 'Alice', type: 'individual' },
+      { id: '2', name: 'Projektgruppe', type: 'group' },
+      { id: '3', name: 'Bob', type: 'individual' },
+    ])
+  }
+
+  if (!isLoaded) {
+    return <div className="text-gray-900 dark:text-gray-100">Laden...</div>
+  }
+
+  if (!user) {
+    return <div className="text-gray-900 dark:text-gray-100">Bitte melden Sie sich an, um auf Ihre Nachrichten zuzugreifen.</div>
   }
 
   return (
-    <div className="container mx-auto py-6 px-4">
-      <h1 className="text-2xl font-bold mb-6">Nachrichten</h1>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
-          <h2 className="text-xl font-semibold mb-4">Neue Nachricht</h2>
-          <div className="space-y-4">
-            <Input 
-              placeholder="Empfänger" 
-              value={newMessage.recipient}
-              onChange={(e) => setNewMessage({...newMessage, recipient: e.target.value})}
-            />
-            <Input 
-              placeholder="Betreff" 
-              value={newMessage.subject}
-              onChange={(e) => setNewMessage({...newMessage, subject: e.target.value})}
-            />
-            <Textarea 
-              placeholder="Nachricht" 
-              value={newMessage.content}
-              onChange={(e) => setNewMessage({...newMessage, content: e.target.value})}
-            />
-            <Button onClick={handleSendMessage}>Senden</Button>
+    <div className="container mx-auto py-6 px-4 bg-white dark:bg-gray-900">
+      <h1 className="text-2xl font-bold mb-6 text-gray-900 dark:text-gray-100">Nachrichten</h1>
+      <div className="flex h-[calc(100vh-200px)] bg-gray-50 dark:bg-gray-800 rounded-lg overflow-hidden">
+        <div className="w-1/4 pr-4 border-r border-gray-200 dark:border-gray-700">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Konversationen</h2>
+            <Button onClick={() => setIsNewMessageDialogOpen(true)} className="bg-blue-500 hover:bg-blue-600 text-white">
+              <PlusCircle className="h-4 w-4 mr-2" />
+              Neu
+            </Button>
           </div>
+          <MessageList 
+            conversations={conversations} 
+            selectedConversation={selectedConversation} 
+            onSelectConversation={setSelectedConversation} 
+          />
         </div>
-        <div>
-          <h2 className="text-xl font-semibold mb-4">Empfangene Nachrichten</h2>
-          <div className="space-y-4">
-            {messages.map((message) => (
-              <div key={message.id} className="border p-4 rounded">
-                <p className="font-semibold">{message.subject}</p>
-                <p className="text-sm text-gray-500">Von: {message.recipient}</p>
-                <p className="text-sm text-gray-500">{message.date.toLocaleString()}</p>
-                <p className="mt-2">{message.content}</p>
-              </div>
-            ))}
-          </div>
+        <div className="w-3/4 pl-4">
+          {selectedConversation ? (
+            <MessageWindow conversation={selectedConversation} currentUser={user} />
+          ) : (
+            <div className="h-full flex items-center justify-center text-gray-700 dark:text-gray-300">
+              Wählen Sie eine Konversation aus oder beginnen Sie eine neue.
+            </div>
+          )}
         </div>
       </div>
+      <NewMessageDialog 
+        isOpen={isNewMessageDialogOpen} 
+        onClose={() => setIsNewMessageDialogOpen(false)}
+        onCreateConversation={(newConversation) => {
+          setConversations([...conversations, newConversation])
+          setSelectedConversation(newConversation)
+          setIsNewMessageDialogOpen(false)
+        }}
+      />
     </div>
   )
 }
+

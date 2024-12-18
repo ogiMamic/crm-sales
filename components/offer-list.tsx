@@ -75,7 +75,7 @@ export function OfferList({ onEditOffer, newOffer }: OfferListProps) {
       })
       setOffers(offers.filter(offer => offer.id !== offerToDelete))
     } catch (error) {
-      console.error('Error deleting offer:', error)
+      console.error('Fehler beim Löschen des Angebots:', error)
     } finally {
       setLoading(null)
       setOfferToDelete(null)
@@ -89,12 +89,12 @@ export function OfferList({ onEditOffer, newOffer }: OfferListProps) {
         <Table>
           <TableHeader>
             <TableRow className="bg-gray-100 dark:bg-gray-700">
-              <TableHead className="text-gray-900 dark:text-gray-100">Number</TableHead>
-              <TableHead className="text-gray-900 dark:text-gray-100">Customer</TableHead>
-              <TableHead className="text-gray-900 dark:text-gray-100">Date</TableHead>
+              <TableHead className="text-gray-900 dark:text-gray-100">Nummer</TableHead>
+              <TableHead className="text-gray-900 dark:text-gray-100">Kunde</TableHead>
+              <TableHead className="text-gray-900 dark:text-gray-100">Datum</TableHead>
               <TableHead className="text-gray-900 dark:text-gray-100">Status</TableHead>
-              <TableHead className="text-gray-900 dark:text-gray-100 text-right">Total Amount</TableHead>
-              <TableHead className="text-gray-900 dark:text-gray-100 text-right">Actions</TableHead>
+              <TableHead className="text-gray-900 dark:text-gray-100 text-right">Gesamtbetrag</TableHead>
+              <TableHead className="text-gray-900 dark:text-gray-100 text-right">Aktionen</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -140,8 +140,8 @@ export function OfferList({ onEditOffer, newOffer }: OfferListProps) {
         isOpen={isConfirmOpen}
         onClose={() => setIsConfirmOpen(false)}
         onConfirm={handleConfirmDelete}
-        title="Delete Offer"
-        description="Are you sure you want to delete this offer? This action cannot be undone."
+        title="Angebot löschen"
+        description="Sind Sie sicher, dass Sie dieses Angebot löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden."
       />
     </>
   )

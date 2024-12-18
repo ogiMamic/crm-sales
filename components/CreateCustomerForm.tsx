@@ -45,12 +45,12 @@ export function CreateCustomerForm({ onCustomerAdded, onCancel }: CreateCustomer
     setIsSubmitting(true)
     try {
       if (!userId) {
-        throw new Error('User not authenticated')
+        throw new Error('Benutzer nicht authentifiziert')
       }
       
       const token = await getToken()
       if (!token) {
-        throw new Error('Failed to get authentication token')
+        throw new Error('Authentifizierungstoken konnte nicht abgerufen werden')
       }
   
       const response = await fetch('/api/customers', {
@@ -64,19 +64,19 @@ export function CreateCustomerForm({ onCustomerAdded, onCancel }: CreateCustomer
       
       if (!response.ok) {
         const errorData = await response.json()
-        throw new Error(errorData.error || 'Failed to add customer')
+        throw new Error(errorData.error || 'Kunde konnte nicht hinzugefügt werden')
       }
   
       toast({
-        title: "Success",
-        description: "Customer added successfully",
+        title: "Erfolg",
+        description: "Kunde erfolgreich hinzugefügt",
       })
       onCustomerAdded()
     } catch (error) {
       console.error('Error adding customer:', error)
       toast({
-        title: "Error",
-        description: "Failed to add customer. Please try again.",
+        title: "Fehler",
+        description: "Kunde konnte nicht hinzugefügt werden. Bitte versuchen Sie es erneut.",
         variant: "destructive",
       })
     } finally {
@@ -98,7 +98,7 @@ export function CreateCustomerForm({ onCustomerAdded, onCancel }: CreateCustomer
         />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="email" className="text-primary">Email</Label>
+        <Label htmlFor="email" className="text-primary">E-Mail</Label>
         <Input
           id="email"
           name="email"
@@ -110,7 +110,7 @@ export function CreateCustomerForm({ onCustomerAdded, onCancel }: CreateCustomer
         />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="phone" className="text-primary">Phone</Label>
+        <Label htmlFor="phone" className="text-primary">Telefon</Label>
         <Input
           id="phone"
           name="phone"
@@ -120,7 +120,7 @@ export function CreateCustomerForm({ onCustomerAdded, onCancel }: CreateCustomer
         />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="company" className="text-primary">Company</Label>
+        <Label htmlFor="company" className="text-primary">Unternehmen</Label>
         <Input
           id="company"
           name="company"
@@ -130,7 +130,7 @@ export function CreateCustomerForm({ onCustomerAdded, onCancel }: CreateCustomer
         />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="address" className="text-primary">Address</Label>
+        <Label htmlFor="address" className="text-primary">Adresse</Label>
         <Input
           id="address"
           name="address"
@@ -140,7 +140,7 @@ export function CreateCustomerForm({ onCustomerAdded, onCancel }: CreateCustomer
         />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="notes" className="text-primary">Notes</Label>
+        <Label htmlFor="notes" className="text-primary">Notizen</Label>
         <Textarea
           id="notes"
           name="notes"
@@ -151,12 +151,13 @@ export function CreateCustomerForm({ onCustomerAdded, onCancel }: CreateCustomer
       </div>
       <div className="flex justify-end space-x-2">
         <Button type="button" variant="outline" className="text-primary" onClick={onCancel} disabled={isSubmitting}>
-          Cancel
+          Abbrechen
         </Button>
         <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? 'Adding...' : 'Add Customer'}
+          {isSubmitting ? 'Hinzufügen...' : 'Kunde hinzufügen'}
         </Button>
       </div>
     </form>
   )
 }
+

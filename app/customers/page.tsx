@@ -77,13 +77,13 @@ export default function CustomersPage() {
       setError(null)
       const response = await fetch('/api/customers')
       if (!response.ok) {
-        throw new Error('Failed to fetch customers')
+        throw new Error('Fehler beim Abrufen der Kunden. Bitte versuchen Sie es später erneut.')
       }
       const data = await response.json()
       setCustomers(data)
     } catch (error) {
       console.error('Error fetching customers:', error)
-      setError('Failed to fetch customers. Please try again later.')
+      setError('Fehler beim Abrufen der Kunden. Bitte versuchen Sie es später erneut.')
     } finally {
       setIsLoading(false)
     }
@@ -93,8 +93,8 @@ export default function CustomersPage() {
     fetchCustomers()
     setIsAddDialogOpen(false)
     toast({
-      title: "Customer Added",
-      description: "New customer has been successfully added.",
+      title: "Kunde hinzugefügt",
+      description: "Neuer Kunde wurde erfolgreich hinzugefügt.",
     })
   }
 
@@ -102,8 +102,8 @@ export default function CustomersPage() {
     fetchCustomers()
     setIsEditDialogOpen(false)
     toast({
-      title: "Customer Updated",
-      description: "Customer information has been successfully updated.",
+      title: "Kunde aktualisiert",
+      description: "Kundeninformationen wurden erfolgreich aktualisiert.",
     })
   }
 
@@ -113,16 +113,16 @@ export default function CustomersPage() {
         method: 'DELETE',
       })
       if (!response.ok) {
-        throw new Error('Failed to delete customer')
+        throw new Error('Fehler beim Löschen des Kunden. Bitte versuchen Sie es erneut.')
       }
       fetchCustomers()
       toast({
-        title: "Customer Deleted",
-        description: "Customer has been successfully removed.",
+        title: "Kunde gelöscht",
+        description: "Kunde wurde erfolgreich entfernt.",
       })
     } catch (error) {
       console.error('Error deleting customer:', error)
-      setError('Failed to delete customer. Please try again.')
+      setError('Fehler beim Löschen des Kunden. Bitte versuchen Sie es erneut.')
     }
   }
 
@@ -148,17 +148,17 @@ export default function CustomersPage() {
         body: JSON.stringify(editForm),
       })
       if (!response.ok) {
-        throw new Error('Failed to update customer')
+        throw new Error('Fehler beim Aktualisieren des Kunden. Bitte versuchen Sie es erneut.')
       }
       fetchCustomers()
       setEditingCustomer(null)
       toast({
-        title: "Customer Updated",
-        description: "Customer information has been successfully updated.",
+        title: "Kunde aktualisiert",
+        description: "Kundeninformationen wurden erfolgreich aktualisiert.",
       })
     } catch (error) {
       console.error('Error updating customer:', error)
-      setError('Failed to update customer. Please try again.')
+      setError('Fehler beim Aktualisieren des Kunden. Bitte versuchen Sie es erneut.')
     }
   }
 
@@ -195,8 +195,8 @@ export default function CustomersPage() {
       <div className="container mx-auto py-10">
         <Card>
           <CardHeader>
-            <CardTitle>Sign In</CardTitle>
-            <CardDescription>Please sign in to access the customer management system.</CardDescription>
+            <CardTitle>Anmelden</CardTitle>
+            <CardDescription>Bitte melden Sie sich an, um auf das Kundenverwaltungssystem zuzugreifen.</CardDescription>
           </CardHeader>
           <CardContent>
             <SignIn />
@@ -209,19 +209,19 @@ export default function CustomersPage() {
   return (
     <div className="container mx-auto py-10 space-y-8">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold text-gray-600">Customers</h1>
+        <h1 className="text-3xl font-bold text-gray-600">Kunden</h1>
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
           <DialogTrigger asChild>
             <Button>
               <PlusCircle className="mr-2 h-4 w-4" />
-              Add Customer
+              Kunde hinzufügen
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[425px] bg-white">
             <DialogHeader>
-              <DialogTitle className='text-primary'>Add New Customer</DialogTitle>
+              <DialogTitle className='text-primary'>Neuen Kunden hinzufügen</DialogTitle>
               <DialogDescription>
-                Enter the details of the new customer below.
+                Geben Sie unten die Details des neuen Kunden ein.
               </DialogDescription>
             </DialogHeader>
             <CreateCustomerForm onCustomerAdded={handleCustomerAdded} onCancel={() => setIsAddDialogOpen(false)} />
@@ -239,14 +239,14 @@ export default function CustomersPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Customer List</CardTitle>
-          <CardDescription>Manage and view all your customers here.</CardDescription>
+          <CardTitle>Kundenliste</CardTitle>
+          <CardDescription>Verwalten und betrachten Sie hier alle Ihre Kunden.</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center space-x-2">
               <Input
-                placeholder="Search customers..."
+                placeholder="Kunden suchen..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="max-w-sm"
@@ -258,13 +258,13 @@ export default function CustomersPage() {
             <div className="flex items-center space-x-2">
               <Select value={timeFilter} onValueChange={(value: TimeFilter) => setTimeFilter(value)}>
                 <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Filter by time" />
+                  <SelectValue placeholder="Nach Zeit filtern" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="7days">Last 7 days</SelectItem>
-                  <SelectItem value="30days">Last 30 days</SelectItem>
-                  <SelectItem value="90days">Last 90 days</SelectItem>
-                  <SelectItem value="all">All time</SelectItem>
+                  <SelectItem value="7days">Letzte 7 Tage</SelectItem>
+                  <SelectItem value="30days">Letzte 30 Tage</SelectItem>
+                  <SelectItem value="90days">Letzte 90 Tage</SelectItem>
+                  <SelectItem value="all">Alle Zeit</SelectItem>
                 </SelectContent>
               </Select>
               <DropdownMenu>
@@ -274,7 +274,7 @@ export default function CustomersPage() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuLabel>Toggle columns</DropdownMenuLabel>
+                  <DropdownMenuLabel>Spalten umschalten</DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuCheckboxItem
                     checked={selectedColumns.includes('name')}
@@ -298,7 +298,7 @@ export default function CustomersPage() {
                       )
                     }}
                   >
-                    Email
+                    E-Mail
                   </DropdownMenuCheckboxItem>
                   <DropdownMenuCheckboxItem
                     checked={selectedColumns.includes('phone')}
@@ -310,7 +310,7 @@ export default function CustomersPage() {
                       )
                     }}
                   >
-                    Phone
+                    Telefon
                   </DropdownMenuCheckboxItem>
                   <DropdownMenuCheckboxItem
                     checked={selectedColumns.includes('company')}
@@ -322,7 +322,7 @@ export default function CustomersPage() {
                       )
                     }}
                   >
-                    Company
+                    Unternehmen
                   </DropdownMenuCheckboxItem>
                   <DropdownMenuCheckboxItem
                     checked={selectedColumns.includes('address')}
@@ -334,7 +334,7 @@ export default function CustomersPage() {
                       )
                     }}
                   >
-                    Address
+                    Adresse
                   </DropdownMenuCheckboxItem>
                   <DropdownMenuCheckboxItem
                     checked={selectedColumns.includes('createdAt')}
@@ -346,7 +346,7 @@ export default function CustomersPage() {
                       )
                     }}
                   >
-                    Created At
+                    Erstellt am
                   </DropdownMenuCheckboxItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -362,12 +362,12 @@ export default function CustomersPage() {
                 <TableHeader>
                   <TableRow>
                     {selectedColumns.includes('name') && <TableHead>Name</TableHead>}
-                    {selectedColumns.includes('email') && <TableHead>Email</TableHead>}
-                    {selectedColumns.includes('phone') && <TableHead>Phone</TableHead>}
-                    {selectedColumns.includes('company') && <TableHead>Company</TableHead>}
-                    {selectedColumns.includes('address') && <TableHead>Address</TableHead>}
-                    {selectedColumns.includes('createdAt') && <TableHead>Created At</TableHead>}
-                    <TableHead className="text-right">Actions</TableHead>
+                    {selectedColumns.includes('email') && <TableHead>E-Mail</TableHead>}
+                    {selectedColumns.includes('phone') && <TableHead>Telefon</TableHead>}
+                    {selectedColumns.includes('company') && <TableHead>Unternehmen</TableHead>}
+                    {selectedColumns.includes('address') && <TableHead>Adresse</TableHead>}
+                    {selectedColumns.includes('createdAt') && <TableHead>Erstellt am</TableHead>}
+                    <TableHead className="text-right">Aktionen</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -455,17 +455,17 @@ export default function CustomersPage() {
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <Button variant="ghost" className="h-8 w-8 p-0">
-                                <span className="sr-only">Open menu</span>
+                                <span className="sr-only">Menü öffnen</span>
                                 <MoreHorizontal className="h-4 w-4" />
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                              <DropdownMenuLabel>Aktionen</DropdownMenuLabel>
                               <DropdownMenuItem onClick={() => handleEditClick(customer)}>
-                                Edit
+                                Bearbeiten
                               </DropdownMenuItem>
                               <DropdownMenuItem onClick={() => handleDeleteCustomer(customer.id)}>
-                                Delete
+                                Löschen
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>

@@ -72,13 +72,13 @@ export default function ServicesPage() {
       setError(null)
       const response = await fetch('/api/dienstleistungen')
       if (!response.ok) {
-        throw new Error('Failed to fetch services')
+        throw new Error('Fehler beim Abrufen der Dienstleistungen')
       }
       const data = await response.json()
       setServices(data)
     } catch (error) {
       console.error('Error fetching services:', error)
-      setError('Failed to fetch services. Please try again later.')
+      setError('Fehler beim Abrufen der Dienstleistungen. Bitte versuchen Sie es später erneut.')
     } finally {
       setIsLoading(false)
     }
@@ -88,8 +88,8 @@ export default function ServicesPage() {
     fetchServices()
     setIsAddDialogOpen(false)
     toast({
-      title: "Service Added",
-      description: "New service has been successfully added.",
+      title: "Dienstleistung hinzugefügt",
+      description: "Neue Dienstleistung wurde erfolgreich hinzugefügt.",
     })
   }
 
@@ -97,8 +97,8 @@ export default function ServicesPage() {
     fetchServices()
     setIsEditDialogOpen(false)
     toast({
-      title: "Service Updated",
-      description: "Service information has been successfully updated.",
+      title: "Dienstleistung aktualisiert",
+      description: "Dienstleistungsinformationen wurden erfolgreich aktualisiert.",
     })
   }
 
@@ -108,16 +108,16 @@ export default function ServicesPage() {
         method: 'DELETE',
       })
       if (!response.ok) {
-        throw new Error('Failed to delete service')
+        throw new Error('Fehler beim Löschen der Dienstleistung')
       }
       fetchServices()
       toast({
-        title: "Service Deleted",
-        description: "Service has been successfully removed.",
+        title: "Dienstleistung gelöscht",
+        description: "Dienstleistung wurde erfolgreich entfernt.",
       })
     } catch (error) {
       console.error('Error deleting service:', error)
-      setError('Failed to delete service. Please try again.')
+      setError('Fehler beim Löschen der Dienstleistung. Bitte versuchen Sie es erneut.')
     }
   }
 
@@ -143,17 +143,17 @@ export default function ServicesPage() {
         body: JSON.stringify(editForm),
       })
       if (!response.ok) {
-        throw new Error('Failed to update service')
+        throw new Error('Fehler beim Aktualisieren der Dienstleistung')
       }
       fetchServices()
       setEditingService(null)
       toast({
-        title: "Service Updated",
-        description: "Service information has been successfully updated.",
+        title: "Dienstleistung aktualisiert",
+        description: "Dienstleistungsinformationen wurden erfolgreich aktualisiert.",
       })
     } catch (error) {
       console.error('Error updating service:', error)
-      setError('Failed to update service. Please try again.')
+      setError('Fehler beim Aktualisieren der Dienstleistung. Bitte versuchen Sie es erneut.')
     }
   }
 
@@ -189,8 +189,8 @@ export default function ServicesPage() {
       <div className="container mx-auto py-10">
         <Card>
           <CardHeader>
-            <CardTitle>Sign In</CardTitle>
-            <CardDescription>Please sign in to access the service management system.</CardDescription>
+            <CardTitle>Anmelden</CardTitle>
+            <CardDescription>Bitte melden Sie sich an, um auf das Dienstleistungsverwaltungssystem zuzugreifen.</CardDescription>
           </CardHeader>
           <CardContent>
             <SignIn />
@@ -203,19 +203,19 @@ export default function ServicesPage() {
   return (
     <div className="container mx-auto py-10 space-y-8">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold text-gray-600">Services</h1>
+        <h1 className="text-3xl font-bold text-gray-600">Dienstleistungen</h1>
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
           <DialogTrigger asChild>
             <Button>
               <PlusCircle className="mr-2 h-4 w-4" />
-              Add Service
+              Dienstleistung hinzufügen
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[425px] bg-white">
             <DialogHeader>
-              <DialogTitle className='text-primary'>Add New Service</DialogTitle>
+              <DialogTitle className='text-primary'>Neue Dienstleistung hinzufügen</DialogTitle>
               <DialogDescription>
-                Enter the details of the new service below.
+                Geben Sie unten die Details der neuen Dienstleistung ein.
               </DialogDescription>
             </DialogHeader>
             <CreateServiceForm onServiceAdded={handleServiceAdded} onCancel={() => setIsAddDialogOpen(false)} />
@@ -233,14 +233,14 @@ export default function ServicesPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Service List</CardTitle>
-          <CardDescription>Manage and view all your services here.</CardDescription>
+          <CardTitle>Dienstleistungsliste</CardTitle>
+          <CardDescription>Verwalten und betrachten Sie hier alle Ihre Dienstleistungen.</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center space-x-2">
               <Input
-                placeholder="Search services..."
+                placeholder="Dienstleistungen suchen..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="max-w-sm"
@@ -252,13 +252,13 @@ export default function ServicesPage() {
             <div className="flex items-center space-x-2">
               <Select value={timeFilter} onValueChange={(value: TimeFilter) => setTimeFilter(value)}>
                 <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Filter by time" />
+                  <SelectValue placeholder="Nach Zeit filtern" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="7days">Last 7 days</SelectItem>
-                  <SelectItem value="30days">Last 30 days</SelectItem>
-                  <SelectItem value="90days">Last 90 days</SelectItem>
-                  <SelectItem value="all">All time</SelectItem>
+                  <SelectItem value="7days">Letzte 7 Tage</SelectItem>
+                  <SelectItem value="30days">Letzte 30 Tage</SelectItem>
+                  <SelectItem value="90days">Letzte 90 Tage</SelectItem>
+                  <SelectItem value="all">Alle Zeit</SelectItem>
                 </SelectContent>
               </Select>
               <DropdownMenu>
@@ -268,7 +268,7 @@ export default function ServicesPage() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuLabel>Toggle columns</DropdownMenuLabel>
+                  <DropdownMenuLabel>Spalten umschalten</DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuCheckboxItem
                     checked={selectedColumns.includes('name')}
@@ -292,7 +292,7 @@ export default function ServicesPage() {
                       )
                     }}
                   >
-                    Description
+                    Beschreibung
                   </DropdownMenuCheckboxItem>
                   <DropdownMenuCheckboxItem
                     checked={selectedColumns.includes('defaultPrice')}
@@ -304,7 +304,7 @@ export default function ServicesPage() {
                       )
                     }}
                   >
-                    Default Price
+                    Standardpreis
                   </DropdownMenuCheckboxItem>
                   <DropdownMenuCheckboxItem
                     checked={selectedColumns.includes('priceType')}
@@ -316,7 +316,7 @@ export default function ServicesPage() {
                       )
                     }}
                   >
-                    Price Type
+                    Preistyp
                   </DropdownMenuCheckboxItem>
                   <DropdownMenuCheckboxItem
                     checked={selectedColumns.includes('createdAt')}
@@ -328,7 +328,7 @@ export default function ServicesPage() {
                       )
                     }}
                   >
-                    Created At
+                    Erstellt am
                   </DropdownMenuCheckboxItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -344,11 +344,11 @@ export default function ServicesPage() {
                 <TableHeader>
                   <TableRow>
                     {selectedColumns.includes('name') && <TableHead>Name</TableHead>}
-                    {selectedColumns.includes('description') && <TableHead>Description</TableHead>}
-                    {selectedColumns.includes('defaultPrice') && <TableHead>Default Price</TableHead>}
-                    {selectedColumns.includes('priceType') && <TableHead>Price Type</TableHead>}
-                    {selectedColumns.includes('createdAt') && <TableHead>Created At</TableHead>}
-                    <TableHead className="text-right">Actions</TableHead>
+                    {selectedColumns.includes('description') && <TableHead>Beschreibung</TableHead>}
+                    {selectedColumns.includes('defaultPrice') && <TableHead>Standardpreis</TableHead>}
+                    {selectedColumns.includes('priceType') && <TableHead>Preistyp</TableHead>}
+                    {selectedColumns.includes('createdAt') && <TableHead>Erstellt am</TableHead>}
+                    <TableHead className="text-right">Aktionen</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -407,15 +407,15 @@ export default function ServicesPage() {
                               }
                             >
                               <SelectTrigger>
-                                <SelectValue placeholder="Select Price Type" />
+                                <SelectValue placeholder="Preistyp auswählen" />
                               </SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="FIXED">FIXED</SelectItem>
-                                <SelectItem value="HOURLY">HOURLY</SelectItem>
+                                <SelectItem value="FIXED">FEST</SelectItem>
+                                <SelectItem value="HOURLY">STÜNDLICH</SelectItem>
                               </SelectContent>
                             </Select>
                           ) : (
-                            service.priceType
+                            service.priceType === 'FIXED' ? 'FEST' : 'STÜNDLICH'
                           )}
                         </TableCell>
                       )}
@@ -436,17 +436,17 @@ export default function ServicesPage() {
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <Button variant="ghost" className="h-8 w-8 p-0">
-                                <span className="sr-only">Open menu</span>
+                                <span className="sr-only">Menü öffnen</span>
                                 <MoreHorizontal className="h-4 w-4" />
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                              <DropdownMenuLabel>Aktionen</DropdownMenuLabel>
                               <DropdownMenuItem onClick={() => handleEditClick(service)}>
-                                Edit
+                                Bearbeiten
                               </DropdownMenuItem>
                               <DropdownMenuItem onClick={() => handleDeleteService(service.id)}>
-                                Delete
+                                Löschen
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>

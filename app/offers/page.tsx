@@ -68,8 +68,8 @@ export default function OffersPage() {
   return (
     <div className="container mx-auto py-10">
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-4xl font-bold text-gray-600">Offers</h1>
-        <Button onClick={handleCreateOffer}>Create New Offer</Button>
+        <h1 className="text-4xl font-bold text-gray-600">Angebote</h1>
+        <Button onClick={handleCreateOffer}>Neues Angebot erstellen</Button>
       </div>
       <OfferList onEditOffer={handleEditOffer} newOffer={newOffer} />
       {isDialogOpen && (
