@@ -10,9 +10,12 @@ type ClerkUser = {
   email: string;
 }
 
-export async function getClerkUsers(): Promise<ClerkUser[]> {
+export async function getClerkUsers(searchTerm: string): Promise<ClerkUser[]> {
   try {
-    const usersResponse = await clerkClient.users.getUserList();
+    const usersResponse = await clerkClient().users.getUserList({
+        query: searchTerm,
+        limit: 10,
+      });
     
     if ('data' in usersResponse && Array.isArray(usersResponse.data)) {
       return usersResponse.data.map((user: User) => ({

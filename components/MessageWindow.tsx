@@ -6,14 +6,12 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Send } from 'lucide-react'
 import { UserResource } from '@clerk/types'
+import { fetchMessages, sendMessage } from '@/app/actions/messageActions'
 
 type Message = {
   id: string
   content: string
-  sender: {
-    id: string
-    name: string
-  }
+  senderId: string
   timestamp: Date
 }
 
@@ -21,50 +19,44 @@ type MessageWindowProps = {
   conversation: {
     id: string
     name: string
+    imageUrl?: string
   }
   currentUser: UserResource
+  onMessageSent: () => void
 }
 
-export function MessageWindow({ conversation, currentUser }: MessageWindowProps) {
+export function MessageWindow({ conversation, currentUser, onMessageSent }: MessageWindowProps) {
   const [messages, setMessages] = useState<Message[]>([])
   const [inputMessage, setInputMessage] = useState('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    // Nachrichten für die ausgewählte Konversation abrufen
-    // Vorerst verwenden wir Beispieldaten
-    setMessages([
-      {
-        id: '1',
-        content: 'Hallo, wie geht es dir?',
-        sender: { id: 'other', name: conversation.name },
-        timestamp: new Date(Date.now() - 1000 * 60 * 5) // 5 Minuten zuvor
-      },
-      {
-        id: '2',
-        content: 'Mir geht es gut, danke! Und dir?',
-        sender: { id: currentUser.id, name: currentUser.fullName || 'Unbekannt' },
-        timestamp: new Date(Date.now() - 1000 * 60 * 4) // 4 Minuten zuvor
-      }
-    ])
-  }, [conversation.id, currentUser.id, currentUser.fullName])
+    fetchAndSetMessages()
+  }, [conversation.id, currentUser.id])
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
-  const handleSendMessage = (e: React.FormEvent) => {
+  const fetchAndSetMessages = async () => {
+    const fetchedMessages = await fetchMessages(currentUser.id, conversation.id)
+    setMessages(fetchedMessages)
+  }
+
+  const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault()
     if (inputMessage.trim()) {
-      const newMessage: Message = {
-        id: Date.now().toString(),
-        content: inputMessage,
-        sender: { id: currentUser.id, name: currentUser.fullName || 'Unbekannt' },
-        timestamp: new Date()
+      try {
+        console.log(conversation.id + " " + currentUser.id +" "+ inputMessage)
+
+        const newMessage = await sendMessage(inputMessage, currentUser.id, conversation.id)
+
+        setMessages([...messages, newMessage])
+        setInputMessage('')
+        onMessageSent()
+      } catch (error) {
+        console.error('Error sending message:', error)
       }
-      setMessages([...messages, newMessage])
-      setInputMessage('')
-      // TODO: Implementieren Sie hier den API-Aufruf zum Senden der Nachricht
     }
   }
 
@@ -72,7 +64,7 @@ export function MessageWindow({ conversation, currentUser }: MessageWindowProps)
     <div className="flex flex-col h-full bg-white dark:bg-gray-900">
       <div className="flex items-center p-4 border-b border-gray-200 dark:border-gray-700">
         <Avatar className="h-10 w-10 mr-3">
-          <AvatarImage src={`https://api.dicebear.com/6.x/initials/svg?seed=${conversation.name}`} />
+          <AvatarImage src={conversation.imageUrl} alt={conversation.name} />
           <AvatarFallback>{conversation.name.charAt(0)}</AvatarFallback>
         </Avatar>
         <div>
@@ -84,19 +76,19 @@ export function MessageWindow({ conversation, currentUser }: MessageWindowProps)
           <div
             key={message.id}
             className={`flex ${
-              message.sender.id === currentUser.id ? 'justify-end' : 'justify-start'
+              message.senderId === currentUser.id ? 'justify-end' : 'justify-start'
             }`}
           >
             <div
               className={`max-w-[70%] rounded-lg p-3 ${
-                message.sender.id === currentUser.id
+                message.senderId === currentUser.id
                   ? 'bg-blue-500 text-white'
                   : 'bg-gray-200 text-gray-900 dark:bg-gray-700 dark:text-gray-100'
               }`}
             >
               <p>{message.content}</p>
               <p className="text-xs mt-1 opacity-70">
-                {message.timestamp.toLocaleTimeString()}
+                {new Date(message.timestamp).toLocaleTimeString()}
               </p>
             </div>
           </div>
