@@ -21,7 +21,6 @@ type MessageWindowProps = {
   conversation: {
     id: string
     name: string
-    type: 'individual' | 'group'
   }
   currentUser: UserResource
 }
@@ -78,9 +77,6 @@ export function MessageWindow({ conversation, currentUser }: MessageWindowProps)
         </Avatar>
         <div>
           <h2 className="font-semibold text-gray-900 dark:text-gray-100">{conversation.name}</h2>
-          <p className="text-sm text-gray-700 dark:text-gray-300">
-            {conversation.type === 'group' ? 'Gruppe' : 'Einzelgespräch'}
-          </p>
         </div>
       </div>
       <div className="flex-1 overflow-y-auto p-4 space-y-4">

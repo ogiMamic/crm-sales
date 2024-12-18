@@ -7,12 +7,20 @@ import { MessageWindow } from '@/components/MessageWindow'
 import { NewMessageDialog } from '@/components/NewMessageDialog'
 import { Button } from "@/components/ui/button"
 import { PlusCircle } from 'lucide-react'
+import { getClerkUsers } from '../actions/getClerkUsers'
 
-// Define the Conversation type
 type Conversation = {
   id: string;
   name: string;
-  type: 'individual' | 'group';
+  imageUrl?: string;
+  email: string;
+}
+
+type ClerkUser = {
+  id: string;
+  name: string;
+  imageUrl: string;
+  email: string;
 }
 
 export default function MessagesPage() {
@@ -23,19 +31,25 @@ export default function MessagesPage() {
 
   useEffect(() => {
     if (user) {
-      // Konversationen des Benutzers abrufen
       fetchConversations()
     }
   }, [user])
 
   const fetchConversations = async () => {
-    // TODO: API-Aufruf implementieren, um die Konversationen des Benutzers abzurufen
-    // Vorerst verwenden wir Beispieldaten
-    setConversations([
-      { id: '1', name: 'Alice', type: 'individual' },
-      { id: '2', name: 'Projektgruppe', type: 'group' },
-      { id: '3', name: 'Bob', type: 'individual' },
-    ])
+    try {
+      const clerkUsers = await getClerkUsers()
+      const userConversations = clerkUsers
+        .filter((clerkUser: ClerkUser) => clerkUser.id !== user?.id)
+        .map((clerkUser: ClerkUser) => ({
+          id: clerkUser.id,
+          name: clerkUser.name || 'Unknown User',
+          imageUrl: clerkUser.imageUrl,
+          email: clerkUser.email,
+        }))
+      setConversations(userConversations)
+    } catch (error) {
+      console.error('Error fetching conversations:', error)
+    }
   }
 
   if (!isLoaded) {
