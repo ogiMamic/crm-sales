@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Send, Check, CheckCheck } from 'lucide-react'
 import { UserResource } from '@clerk/types'
-import { fetchMessages, sendMessage, markMessageAsRead } from '@/app/actions/messageActions'
+import { fetchMessages, sendMessage, markMessageAsRead, markAllMessagesAsRead } from '@/app/actions/messageActions'
 import { useChannel } from "@ably-labs/react-hooks"
 
 type Message = {
@@ -43,10 +43,24 @@ export function MessageWindow({ conversation, currentUser, onMessageSent }: Mess
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
-  useChannel(`conversation:${conversation.id}`, "new-message", (message) => {
-    setMessages(prevMessages => [...prevMessages, message.data]);
-    if (message.data.receiverId === currentUser.id) {
-      markMessageAsRead(message.data.id);
+  useEffect(() => {
+    markAllMessagesAsRead(currentUser.id, conversation.id);
+  }, [conversation.id, currentUser.id]);
+
+  // Subscribe to the conversation channel
+  useChannel(`conversation:${conversation.id}`, (message) => {
+    if (message.name === "new-message") {
+      const newMessage = message.data as Message;
+      setMessages(prevMessages => [...prevMessages, newMessage]);
+      if (newMessage.receiverId === currentUser.id) {
+        markMessageAsRead(newMessage.id);
+      }
+    } else if (message.name === "all-messages-read") {
+      setMessages(prevMessages => 
+        prevMessages.map(msg => 
+          msg.senderId === currentUser.id ? { ...msg, read: true } : msg
+        )
+      );
     }
   });
 

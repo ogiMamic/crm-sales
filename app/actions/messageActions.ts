@@ -42,27 +42,28 @@ export async function sendMessage(content: string, senderId: string, receiverId:
       }
     })
 
-    const channel = ably.channels.get(`conversation:${receiverId}`);
-    await channel.publish("new-message", {
+    const messageData = {
       id: newMessage.id,
       content: newMessage.content,
       senderId: newMessage.senderId,
       receiverId: newMessage.receiverId,
       timestamp: newMessage.createdAt,
       read: newMessage.read
-    });
+    };
 
+    // Publish to receiver's conversation channel
+    const receiverChannel = ably.channels.get(`conversation:${receiverId}`);
+    await receiverChannel.publish("new-message", messageData);
+
+    // Publish to sender's conversation channel
+    const senderChannel = ably.channels.get(`conversation:${senderId}`);
+    await senderChannel.publish("new-message", messageData);
+
+    // Notify receiver about new message
     const userChannel = ably.channels.get(`user:${receiverId}`);
     await userChannel.publish("new-message", { senderId });
 
-    return {
-      id: newMessage.id,
-      content: newMessage.content,
-      senderId: newMessage.senderId,
-      receiverId: newMessage.receiverId,
-      timestamp: newMessage.createdAt,
-      read: newMessage.read
-    }
+    return messageData;
   } catch (error) {
     console.error('Error sending message:', error)
     throw error
@@ -82,6 +83,29 @@ export async function markMessageAsRead(messageId: string) {
     return updatedMessage
   } catch (error) {
     console.error('Error marking message as read:', error)
+    throw error
+  }
+}
+
+export async function markAllMessagesAsRead(currentUserId: string, conversationId: string) {
+  try {
+    await prisma.message.updateMany({
+      where: {
+        receiverId: currentUserId,
+        senderId: conversationId,
+        read: false
+      },
+      data: {
+        read: true
+      }
+    })
+
+    const channel = ably.channels.get(`conversation:${conversationId}`)
+    await channel.publish('all-messages-read', { readerId: currentUserId })
+
+    return { success: true }
+  } catch (error) {
+    console.error('Error marking all messages as read:', error)
     throw error
   }
 }
