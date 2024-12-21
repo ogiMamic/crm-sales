@@ -54,11 +54,10 @@ export function MessageWindow({ conversation, currentUser, onMessageSent, onMess
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
-  useChannel(`conversation:${conversation.id}`, (message) => {
+  const handleMessage = (message: any) => {
     if (message.name === "new-message") {
       const newMessage = message.data as Message
       setMessages(prevMessages => {
-        // Check if the message already exists to prevent duplicates
         if (!prevMessages.some(msg => msg.id === newMessage.id)) {
           return [...prevMessages, newMessage]
         }
@@ -69,18 +68,34 @@ export function MessageWindow({ conversation, currentUser, onMessageSent, onMess
         onMessagesRead()
       }
     } else if (message.name === "messages-read") {
+      const { readerId, messageIds } = message.data
       setMessages(prevMessages => 
         prevMessages.map(msg => 
-          msg.senderId === currentUser.id ? { ...msg, read: true } : msg
+          messageIds.includes(msg.id) ? { ...msg, read: true } : msg
         )
       )
     }
-  })
+  }
+
+  // Subscribe to the conversation partner's channel
+  useChannel(`conversation:${conversation.id}`, handleMessage)
+
+  // Subscribe to the current user's channel
+  useChannel(`conversation:${currentUser.id}`, handleMessage)
 
   const fetchAndSetMessages = async () => {
     try {
       const fetchedMessages = await fetchMessages(currentUser.id, conversation.id)
       setMessages(fetchedMessages)
+      
+      // Mark messages as read if there are any unread ones
+      const hasUnreadMessages = fetchedMessages.some(
+        msg => !msg.read && msg.receiverId === currentUser.id
+      )
+      if (hasUnreadMessages) {
+        await markAllMessagesAsRead(currentUser.id, conversation.id)
+        onMessagesRead()
+      }
     } catch (error) {
       console.error("Error fetching messages:", error)
     }
@@ -90,8 +105,9 @@ export function MessageWindow({ conversation, currentUser, onMessageSent, onMess
     e.preventDefault()
     if (inputMessage.trim()) {
       try {
-        const newMessage = await sendMessage(inputMessage, currentUser.id, conversation.id)
+        const messageToSend = inputMessage
         setInputMessage('')
+        await sendMessage(messageToSend, currentUser.id, conversation.id)
         onMessageSent()
       } catch (error) {
         console.error('Error sending message:', error)
@@ -117,13 +133,12 @@ export function MessageWindow({ conversation, currentUser, onMessageSent, onMess
           messages.map((message) => (
             <div
               key={message.id}
-              className={`flex ${message.senderId === currentUser.id ? 'justify-end' : 'justify-start'
-                }`}
+              className={`flex ${message.senderId === currentUser.id ? 'justify-end' : 'justify-start'}`}
             >
               <div
                 className={`max-w-[70%] rounded-lg p-3 ${message.senderId === currentUser.id
-                    ? 'bg-blue-500 text-white'
-                    : 'bg-gray-200 text-gray-900 dark:bg-gray-700 dark:text-gray-100'
+                  ? 'bg-blue-500 text-white'
+                  : 'bg-gray-200 text-gray-900 dark:bg-gray-700 dark:text-gray-100'
                   }`}
               >
                 <p>{message.content}</p>

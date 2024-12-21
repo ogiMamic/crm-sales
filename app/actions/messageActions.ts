@@ -33,6 +33,9 @@ export async function fetchMessages(currentUserId: string, conversationId: strin
 
 export async function sendMessage(content: string, senderId: string, receiverId: string) {
   try {
+    // First, mark all previous messages as read
+    await markAllMessagesAsRead(senderId, receiverId)
+
     const newMessage = await prisma.message.create({
       data: {
         content,
@@ -51,17 +54,15 @@ export async function sendMessage(content: string, senderId: string, receiverId:
       read: newMessage.read
     };
 
-    // Publish to receiver's conversation channel
+    // Publish to both channels to ensure both users get the message
     const receiverChannel = ably.channels.get(`conversation:${receiverId}`);
-    await receiverChannel.publish("new-message", messageData);
-
-    // Publish to sender's conversation channel
     const senderChannel = ably.channels.get(`conversation:${senderId}`);
-    await senderChannel.publish("new-message", messageData);
-
-    // Notify receiver about new message
-    const userChannel = ably.channels.get(`user:${receiverId}`);
-    await userChannel.publish("new-message", { senderId });
+    
+    await Promise.all([
+      receiverChannel.publish("new-message", messageData),
+      senderChannel.publish("new-message", messageData),
+      ably.channels.get(`user:${receiverId}`).publish("new-message", { senderId })
+    ]);
 
     return messageData;
   } catch (error) {
@@ -70,42 +71,46 @@ export async function sendMessage(content: string, senderId: string, receiverId:
   }
 }
 
-export async function markMessageAsRead(messageId: string) {
-  try {
-    const updatedMessage = await prisma.message.update({
-      where: { id: messageId },
-      data: { read: true },
-    })
-
-    const channel = ably.channels.get(`conversation:${updatedMessage.senderId}`)
-    await channel.publish('message-read', { messageId: updatedMessage.id })
-
-    return updatedMessage
-  } catch (error) {
-    console.error('Error marking message as read:', error)
-    throw error
-  }
-}
-
 export async function markAllMessagesAsRead(currentUserId: string, conversationId: string) {
   try {
-    await prisma.message.updateMany({
+    // Get unread messages before updating
+    const unreadMessages = await prisma.message.findMany({
       where: {
         receiverId: currentUserId,
         senderId: conversationId,
         read: false
       },
-      data: {
-        read: true
+      select: {
+        id: true
       }
     })
 
-    const channel = ably.channels.get(`conversation:${conversationId}`)
-    await channel.publish('all-messages-read', { readerId: currentUserId })
+    if (unreadMessages.length > 0) {
+      // Update messages to read
+      await prisma.message.updateMany({
+        where: {
+          receiverId: currentUserId,
+          senderId: conversationId,
+          read: false
+        },
+        data: {
+          read: true
+        }
+      })
 
-    return { success: true }
+      // Publish to both users' channels to ensure both get the update
+      const messageIds = unreadMessages.map(m => m.id)
+      const updateData = { readerId: currentUserId, messageIds }
+      
+      await Promise.all([
+        ably.channels.get(`conversation:${conversationId}`).publish('messages-read', updateData),
+        ably.channels.get(`conversation:${currentUserId}`).publish('messages-read', updateData)
+      ])
+    }
+
+    return { success: true, count: unreadMessages.length }
   } catch (error) {
-    console.error('Error marking all messages as read:', error)
+    console.error('Error marking messages as read:', error)
     throw error
   }
 }
