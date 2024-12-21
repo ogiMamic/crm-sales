@@ -11,7 +11,6 @@ import { Search, X } from 'lucide-react'
 import { getConversations } from '../actions/getConversations'
 import { getClerkUsers } from '../actions/getClerkUsers'
 import { useChannel } from "@ably-labs/react-hooks"
-import { ably } from '@/lib/ably'
 import { configureAbly } from '@ably-labs/react-hooks'
 
 type Conversation = {
@@ -42,7 +41,9 @@ export default function MessagesPage() {
       fetchConversations()
     }
   }, [user])
+
   configureAbly({ key: process.env.ABLY_API_KEY, authUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/api/createTokenRequest`, clientId: "crm-sales"})
+  
   useChannel(`user:${user?.id}`, "new-message", (message) => {
     const { senderId } = message.data;
     setConversations(prevConversations => 
@@ -86,6 +87,16 @@ export default function MessagesPage() {
     setSearchTerm('')
     setIsSearching(false)
     setSearchResults([])
+  }
+
+  const handleMessagesRead = () => {
+    if (selectedConversation) {
+      setConversations(prevConversations => 
+        prevConversations.map(conv => 
+          conv.id === selectedConversation.id ? { ...conv, hasNewMessages: false } : conv
+        )
+      )
+    }
   }
 
   if (!isLoaded) {
@@ -159,7 +170,12 @@ export default function MessagesPage() {
         </div>
         <div className="w-2/3 pl-4">
           {selectedConversation ? (
-            <MessageWindow conversation={selectedConversation} currentUser={user} onMessageSent={fetchConversations} />
+            <MessageWindow 
+              conversation={selectedConversation} 
+              currentUser={user} 
+              onMessageSent={fetchConversations} 
+              onMessagesRead={handleMessagesRead}
+            />
           ) : (
             <div className="h-full flex items-center justify-center text-gray-800 dark:text-gray-200">
               Wählen Sie eine Konversation aus oder suchen Sie nach einem Benutzer, um eine neue zu beginnen.

@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Send, Check, CheckCheck } from 'lucide-react'
 import { UserResource } from '@clerk/types'
-import { fetchMessages, sendMessage, markMessageAsRead, markAllMessagesAsRead } from '@/app/actions/messageActions'
+import { fetchMessages, sendMessage, markAllMessagesAsRead } from '@/app/actions/messageActions'
 import { useChannel } from "@ably-labs/react-hooks"
 
 type Message = {
@@ -28,53 +28,59 @@ type MessageWindowProps = {
   }
   currentUser: UserResource
   onMessageSent: () => void
+  onMessagesRead: () => void
 }
 
-export function MessageWindow({ conversation, currentUser, onMessageSent }: MessageWindowProps) {
+export function MessageWindow({ conversation, currentUser, onMessageSent, onMessagesRead }: MessageWindowProps) {
   const [messages, setMessages] = useState<Message[]>([])
   const [inputMessage, setInputMessage] = useState('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const windowRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     fetchAndSetMessages()
+    const markAsRead = () => {
+      markAllMessagesAsRead(currentUser.id, conversation.id)
+      onMessagesRead()
+    }
+    markAsRead()
+    windowRef.current?.addEventListener('focus', markAsRead)
+    return () => {
+      windowRef.current?.removeEventListener('focus', markAsRead)
+    }
   }, [conversation.id, currentUser.id])
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
-  useEffect(() => {
-    markAllMessagesAsRead(currentUser.id, conversation.id);
-  }, [conversation.id, currentUser.id]);
-
-  // Subscribe to the conversation channel
   useChannel(`conversation:${conversation.id}`, (message) => {
     if (message.name === "new-message") {
-      const newMessage = message.data as Message;
-      setMessages(prevMessages => [...prevMessages, newMessage]);
+      const newMessage = message.data as Message
+      setMessages(prevMessages => {
+        // Check if the message already exists to prevent duplicates
+        if (!prevMessages.some(msg => msg.id === newMessage.id)) {
+          return [...prevMessages, newMessage]
+        }
+        return prevMessages
+      })
       if (newMessage.receiverId === currentUser.id) {
-        markMessageAsRead(newMessage.id);
+        markAllMessagesAsRead(currentUser.id, conversation.id)
+        onMessagesRead()
       }
-    } else if (message.name === "all-messages-read") {
+    } else if (message.name === "messages-read") {
       setMessages(prevMessages => 
         prevMessages.map(msg => 
           msg.senderId === currentUser.id ? { ...msg, read: true } : msg
         )
-      );
+      )
     }
-  });
+  })
 
   const fetchAndSetMessages = async () => {
     try {
       const fetchedMessages = await fetchMessages(currentUser.id, conversation.id)
-      console.log("Fetched messages:", fetchedMessages) // Debug log
       setMessages(fetchedMessages)
-      // Mark all received messages as read
-      fetchedMessages.forEach(message => {
-        if (message.receiverId === currentUser.id && !message.read) {
-          markMessageAsRead(message.id);
-        }
-      });
     } catch (error) {
       console.error("Error fetching messages:", error)
     }
@@ -85,7 +91,6 @@ export function MessageWindow({ conversation, currentUser, onMessageSent }: Mess
     if (inputMessage.trim()) {
       try {
         const newMessage = await sendMessage(inputMessage, currentUser.id, conversation.id)
-        setMessages(prevMessages => [...prevMessages, newMessage])
         setInputMessage('')
         onMessageSent()
       } catch (error) {
@@ -95,7 +100,7 @@ export function MessageWindow({ conversation, currentUser, onMessageSent }: Mess
   }
 
   return (
-    <div className="flex flex-col h-full bg-white dark:bg-gray-900">
+    <div ref={windowRef} className="flex flex-col h-full bg-white dark:bg-gray-900" tabIndex={0}>
       <div className="flex items-center p-4 border-b border-gray-200 dark:border-gray-700">
         <Avatar className="h-10 w-10 mr-3">
           <AvatarImage src={conversation.imageUrl} alt={conversation.name} />
