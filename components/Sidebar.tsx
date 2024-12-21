@@ -62,21 +62,21 @@ const routes = [
     icon: Bell,
     href: '/reminders',
   },
-  {
-    label: 'Mitarbeiter Zuweisung',
-    icon: Briefcase,
-    href: '/employee-allocation',
-  },
-  {
-    label: 'Aufgaben',
-    icon: ClipboardList,
-    href: '/tasks',
-  },
-  {
-    label: 'E-Mail',
-    icon: Mail,
-    href: '/email',
-  }
+  // {
+  //   label: 'Mitarbeiter Zuweisung',
+  //   icon: Briefcase,
+  //   href: '/employee-allocation',
+  // },
+  // {
+  //   label: 'Aufgaben',
+  //   icon: ClipboardList,
+  //   href: '/tasks',
+  // },
+  // {
+  //   label: 'E-Mail',
+  //   icon: Mail,
+  //   href: '/email',
+  // }
 ]
 
 export function Sidebar() {

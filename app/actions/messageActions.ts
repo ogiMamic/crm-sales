@@ -54,13 +54,12 @@ export async function sendMessage(content: string, senderId: string, receiverId:
       read: newMessage.read
     };
 
-    // Publish to both channels to ensure both users get the message
-    const receiverChannel = ably.channels.get(`conversation:${receiverId}`);
-    const senderChannel = ably.channels.get(`conversation:${senderId}`);
+    // Create a unique channel name for this conversation
+    const channelName = `conversation:${[senderId, receiverId].sort().join(':')}`
+    const conversationChannel = ably.channels.get(channelName);
     
     await Promise.all([
-      receiverChannel.publish("new-message", messageData),
-      senderChannel.publish("new-message", messageData),
+      conversationChannel.publish("new-message", messageData),
       ably.channels.get(`user:${receiverId}`).publish("new-message", { senderId })
     ]);
 
@@ -98,14 +97,12 @@ export async function markAllMessagesAsRead(currentUserId: string, conversationI
         }
       })
 
-      // Publish to both users' channels to ensure both get the update
+      // Publish to the unique conversation channel
       const messageIds = unreadMessages.map(m => m.id)
       const updateData = { readerId: currentUserId, messageIds }
+      const channelName = `conversation:${[currentUserId, conversationId].sort().join(':')}`
       
-      await Promise.all([
-        ably.channels.get(`conversation:${conversationId}`).publish('messages-read', updateData),
-        ably.channels.get(`conversation:${currentUserId}`).publish('messages-read', updateData)
-      ])
+      await ably.channels.get(channelName).publish('messages-read', updateData)
     }
 
     return { success: true, count: unreadMessages.length }

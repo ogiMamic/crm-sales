@@ -77,11 +77,11 @@ export function MessageWindow({ conversation, currentUser, onMessageSent, onMess
     }
   }
 
-  // Subscribe to the conversation partner's channel
-  useChannel(`conversation:${conversation.id}`, handleMessage)
+  // Create a unique channel name for this conversation
+  const channelName = `conversation:${[currentUser.id, conversation.id].sort().join(':')}`
 
-  // Subscribe to the current user's channel
-  useChannel(`conversation:${currentUser.id}`, handleMessage)
+  // Subscribe to the unique conversation channel
+  useChannel(channelName, handleMessage)
 
   const fetchAndSetMessages = async () => {
     try {
